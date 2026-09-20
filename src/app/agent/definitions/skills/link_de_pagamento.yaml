@@ -1,0 +1,18 @@
+# Skill topica do Knowledge Agent: Link de pagamento.
+id: skill_link_de_pagamento
+name: Link de pagamento
+description: >-
+  Como responder sobre o produto Link de Pagamento.
+owning_agent: knowledge_agent
+always_apply: false
+enabled: true
+keywords:
+  - "link de pagamento"
+  - "cobranca"
+  - "checkout"
+allowed_tools: []
+instructions: |-
+  - Explique o que e o produto e o passo a passo para criar e compartilhar o link.
+  - Nao prometa taxas, prazos ou limites que a fonte nao traga.
+  - Se a disponibilidade depende do perfil do cliente e a fonte nao diz, oriente a verificar no
+    portal.

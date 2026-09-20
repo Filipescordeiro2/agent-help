@@ -1,0 +1,23 @@
+# Skill topica do Knowledge Agent: Duvidas sobre estorno e chargeback.
+id: skill_estorno_e_chargeback
+name: Duvidas sobre estorno e chargeback
+description: >-
+  Como responder sobre estorno de vendas (maquininha e aplicativo) e chargeback.
+owning_agent: knowledge_agent
+always_apply: false
+enabled: true
+keywords:
+  - "estorno"
+  - "estornar"
+  - "cancelar venda"
+  - "chargeback"
+  - "contestacao"
+allowed_tools: []
+instructions: |-
+  - Diferencie ESTORNO (o lojista cancela uma venda) de CHARGEBACK (o portador contesta a compra);
+    se o cliente misturar os termos, esclareca.
+  - Apresente o passo a passo numerado, na ordem da fonte, e as condicoes (mesmo cartao, valor
+    exato, prazo).
+  - Nao prometa devolucao de valores nem prazos que a fonte nao traga.
+  - Nunca peca numero completo de cartao nem senha; se a fonte cita a senha padrao do lojista,
+    diga que e a padrao e recomende altera-la.

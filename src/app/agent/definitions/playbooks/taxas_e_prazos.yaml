@@ -1,0 +1,95 @@
+# Playbook do tipo de solicitacao: Taxas, prazos e plano de recebimento.
+# Soma-se ao Playbook geral (pb_atendimento_duvidas_n1): aqui ficam as regras do assunto.
+# Escolhido pelas Keywords do assunto (ou por similaridade). As etapas com `tool` sao
+# executadas pelo pipeline antes da resposta (base primeiro; se nao responde, a web, e o que
+# for relevante fica salvo na base para as proximas perguntas).
+id: pb_taxas_e_prazos
+name: Taxas, prazos e plano de recebimento
+objective: >-
+  Responder duvidas sobre taxas por transacao (MDR), planos, prazos de recebimento e plano de
+  recebimento reduzido, sempre com o valor e a condicao que a fonte informa.
+owning_agent: knowledge_agent
+parent: pb_atendimento_duvidas_n1
+when_to_use: >-
+  Use quando a duvida for sobre quanto custa (taxa por transacao, MDR, mensalidade), em quanto
+  tempo o dinheiro cai (prazo de recebimento), antecipacao ou plano de recebimento reduzido.
+status: active
+symptoms:
+  - "qual a taxa"
+  - "quanto custa"
+  - "taxa por transacao"
+  - "mdr"
+  - "prazo de recebimento"
+  - "quando recebo"
+  - "plano de recebimento"
+  - "receber mais rapido"
+  - "antecipacao"
+prerequisites:
+  - Mensagem do cliente recebida (user_id e sessao ja validados pelo canal).
+authorized_tools:
+  - search_knowledge
+  - search_web_pages
+skills:
+  - skill_taxas_e_prazos
+steps:
+  - step_id: entender_duvida
+    instruction: >-
+      Identifique o que o cliente quer saber: taxa, prazo, mensalidade ou plano de recebimento, e a
+      modalidade (debito, credito a vista, credito parcelado, Pix). Se a resposta depende da
+      modalidade ou do plano e o cliente nao disse, pergunte qual e.
+    on_success: consultar_base
+    on_failure: pedir_esclarecimento
+  - step_id: pedir_esclarecimento
+    instruction: >-
+      Faca UMA pergunta objetiva para obter o dado que falta e aguarde a resposta do cliente.
+    on_success: consultar_base
+    on_failure: escalar
+  - step_id: consultar_base
+    tool: search_knowledge
+    instruction: >-
+      Verifique se a base de conhecimento (busca vetorial) ja tem conteudo que responda. Se tiver,
+      responda so com a base e NAO acesse a web.
+    on_success: responder
+    on_failure: consultar_web
+  - step_id: consultar_web
+    tool: search_web_pages
+    instruction: >-
+      A base nao responde: consulte as fontes web do assunto e salve na base so os trechos relevantes.
+      Costumam responder as paginas 'Taxas por transacao' e 'Plano de recebimento reduzido' da Central
+      de Ajuda.
+    on_success: responder
+    on_failure: escalar
+  - step_id: responder
+    instruction: >-
+      Informe o valor exatamente como a fonte traz, com a modalidade e a condicao (plano, vigencia).
+      Nunca calcule quanto o cliente pagaria ou receberia se a formula e os valores nao estiverem na
+      fonte.
+    on_success: confirmar_resolucao
+    on_failure: escalar
+  - step_id: confirmar_resolucao
+    instruction: >-
+      Pergunte se a duvida foi resolvida. Se nao, reformule a explicacao uma vez e, persistindo,
+      escale.
+    on_success: closed
+    on_failure: escalar
+  - step_id: escalar
+    instruction: >-
+      Diga com transparencia o que nao foi encontrado e oriente o cliente a procurar a central de
+      atendimento da Getnet. Nao use siglas internas na conversa.
+    on_success: closed
+    on_failure: closed
+decision_points:
+  - question: A base de conhecimento responde a duvida deste assunto?
+    if_yes: responder so com a base (nao acessar a web)
+    if_no: consultar as fontes web do assunto e salvar so o relevante na base
+  - question: Falta algum dado do cliente para responder com precisao?
+    if_yes: fazer UMA pergunta objetiva
+    if_no: responder com o que a fonte traz
+exceptions:
+  - "Se a fonte traz tabelas por plano e o cliente nao informou o plano, nao escolha um: pergunte."
+escalation_rules:
+  - "A pergunta pede uma condicao comercial personalizada (negociacao de taxa) que nenhuma fonte publica."
+success_criteria:
+  - "O cliente recebeu o valor ou prazo correto, com a modalidade e a condicao."
+closure_criteria:
+  - O cliente confirmou que a duvida foi resolvida ou foi orientado a procurar a central de atendimento.

@@ -1,0 +1,19 @@
+# Skill topica do Knowledge Agent: Duvidas sobre Pix.
+id: skill_pix
+name: Duvidas sobre Pix
+description: >-
+  Como responder sobre habilitar e vender com Pix (portal, aplicativo, maquininha e Get Tap).
+owning_agent: knowledge_agent
+always_apply: false
+enabled: true
+keywords:
+  - "pix"
+  - "qr code"
+  - "biometria"
+  - "get tap"
+allowed_tools: []
+instructions: |-
+  - Comece pelos pre-requisitos (perfil e senha para habilitar) e so depois o passo a passo.
+  - Se ha mais de um canal (portal, app, maquininha, Get Tap), resuma cada um e pergunte qual o
+    cliente usa, em vez de escolher.
+  - Nao explique chaves Pix pessoais de bancos: fora do escopo da Getnet.

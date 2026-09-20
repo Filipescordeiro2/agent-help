@@ -1,0 +1,61 @@
+# Central de Ajuda Getnet - Pix (aplicativo, maquininha, portal, biometria e Get Tap).
+sources:
+  - id: ws_ajuda_pix_habilitar_aplicativo
+    name: Get Ajuda - Como habilitar o recebimento via Pix no aplicativo
+    url: https://site.getnet.com.br/get-ajuda-pix/como-habilitar-o-recebimento-de-vendas-via-pix-no-aplicativo-getnet-brasil/
+    description: >-
+      Como habilitar o recebimento de vendas via Pix pelo aplicativo Getnet Brasil e pela maquininha,
+      incluindo a atualizacao da maquininha quando a opcao de pagamento por aproximacao nao aparece.
+    usage: >-
+      Use para ativar o Pix, receber por Pix e quando o Pix nao aparece na maquininha.
+    topics: [pix, habilitar pix, ativar pix, receber por pix, aplicativo, atualizar maquininha, qr code, pagamento por aproximacao]
+    priority: 43
+    enabled: true
+
+  - id: ws_ajuda_pix_vender_maquininha
+    name: Get Ajuda - Como fazer uma venda com Pix na maquininha
+    url: https://site.getnet.com.br/get-ajuda-pix/como-fazer-uma-venda-com-pix-na-maquininha/
+    description: >-
+      Passo a passo para vender com Pix por QR Code na maquininha (Pagamento, valor, escolher Pix e
+      exibir o QR Code). Exige o Pix habilitado pelo aplicativo Getnet Brasil ou pelo Portal.
+    usage: >-
+      Use para cobrar por Pix na maquininha, gerar o QR Code e o cliente pagar por Pix.
+    topics: [vender com pix, qr code, cobrar pix, pagamento, maquininha, pix na maquininha]
+    priority: 43
+    enabled: true
+
+  - id: ws_ajuda_pix_biometria
+    name: Get Ajuda - Como utilizo o Pix por biometria
+    url: https://site.getnet.com.br/get-ajuda-pix/como-utilizo-o-pix-por-biometria/
+    description: >-
+      Como funciona e como habilitar o pagamento Pix com autenticacao biometrica: formulario para a
+      equipe comercial, vinculacao da conta no primeiro uso e pagamentos futuros.
+    usage: >-
+      Use para Pix por biometria, pagamento biometrico e autenticacao por biometria.
+    topics: [pix por biometria, biometria, pagamento biometrico, autenticacao, vinculacao de conta]
+    priority: 43
+    enabled: true
+
+  - id: ws_ajuda_pix_portal
+    name: Get Ajuda - Como habilitar Pix pelo Portal
+    url: https://site.getnet.com.br/get-ajuda-pix/como-habilitar-pix-pelo-portal/
+    description: >-
+      Como habilitar o Pix pelo Portal (menu Vendas com Pix, Habilitar Venda com Pix). Ativar e desativar
+      exige perfil administrativo e senha.
+    usage: >-
+      Use para habilitar ou desabilitar o Pix pelo portal, no computador, com perfil administrativo.
+    topics: [habilitar pix, portal, vendas com pix, perfil administrativo, desativar pix, computador]
+    priority: 43
+    enabled: true
+
+  - id: ws_ajuda_pix_get_tap
+    name: Get Ajuda - Como habilitar e vender com Pix no Get Tap
+    url: https://site.getnet.com.br/get-ajuda-get-tap/como-habilitar-e-vender-com-pix-no-get-tap/
+    description: >-
+      Como habilitar e vender via Pix pelo Get Tap: habilitar a funcionalidade no aplicativo Getnet
+      Brasil (menu Servicos) e vincular uma conta bancaria.
+    usage: >-
+      Use para Get Tap, vender com Pix pelo celular e vincular conta bancaria ao Get Tap.
+    topics: [get tap, pix, vender pelo celular, tap to pay, vincular conta, aplicativo, servicos]
+    priority: 43
+    enabled: true

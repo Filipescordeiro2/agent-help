@@ -1,0 +1,39 @@
+# Central de Ajuda Getnet - estorno de vendas e chargeback.
+sources:
+  - id: ws_ajuda_estorno_maquininha
+    name: Get Ajuda - Como estornar uma venda na maquininha
+    url: https://site.getnet.com.br/get-ajuda-estorno/como-estornar-uma-venda-na-maquininha-getnet/
+    description: >-
+      Passo a passo para estornar (cancelar) uma venda direto na maquininha Getnet: opcao Estorno na
+      tela inicial e senha do lojista. O estorno deve ser feito no mesmo dia da transacao.
+    usage: >-
+      Use para cancelar ou estornar uma venda feita no mesmo dia, na propria maquininha.
+    topics: [estorno, estornar, cancelar venda, cancelamento, devolver, devolucao, mesmo dia, senha do lojista, maquininha]
+    priority: 41
+    enabled: true
+
+  - id: ws_ajuda_estorno_aplicativo
+    name: Get Ajuda - Como estornar uma venda pelo aplicativo Getnet Brasil
+    url: https://site.getnet.com.br/get-ajuda-estorno/como-estornar-uma-venda-pelo-aplicativo-getnet-brasil/
+    description: >-
+      Como estornar (cancelar) vendas pelo Aplicativo Getnet Brasil, inclusive transacoes que nao podem
+      ser resolvidas no mesmo dia.
+    usage: >-
+      Use para estornar venda de dias anteriores ou quando nao ha maquininha a mao, pelo aplicativo.
+    topics: [estorno, estornar, cancelar venda, aplicativo, app, venda de outro dia, cancelamento, devolucao]
+    priority: 41
+    enabled: true
+
+  - id: ws_ajuda_chargeback
+    name: Get Ajuda - O que e chargeback e como evitar
+    url: https://site.getnet.com.br/get-ajuda-estorno/o-que-e-chargeback/
+    description: >-
+      Explica o que e chargeback (contestacao de uma compra pelo titular do cartao junto ao banco
+      emissor), como funciona pelas regras das bandeiras, o impacto de debito para o estabelecimento e
+      como evita-lo.
+    usage: >-
+      Use para contestacao, compra nao reconhecida, cliente que disputou a compra, debito por
+      chargeback e prevencao.
+    topics: [chargeback, contestacao, compra nao reconhecida, disputa, estorno, fraude, banco emissor, bandeiras, como evitar, debito]
+    priority: 41
+    enabled: true

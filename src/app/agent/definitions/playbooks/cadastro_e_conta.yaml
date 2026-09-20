@@ -1,0 +1,93 @@
+# Playbook do tipo de solicitacao: Cadastro, conta e senha do aplicativo.
+# Soma-se ao Playbook geral (pb_atendimento_duvidas_n1): aqui ficam as regras do assunto.
+# Escolhido pelas Keywords do assunto (ou por similaridade). As etapas com `tool` sao
+# executadas pelo pipeline antes da resposta (base primeiro; se nao responde, a web, e o que
+# for relevante fica salvo na base para as proximas perguntas).
+id: pb_cadastro_e_conta
+name: Cadastro, conta e senha do aplicativo
+objective: >-
+  Orientar sobre cadastro e conta: atualizar dados cadastrais, finalizar o cadastro, alterar o
+  domicilio bancario e redefinir a senha do aplicativo ou do portal.
+owning_agent: knowledge_agent
+parent: pb_atendimento_duvidas_n1
+when_to_use: >-
+  Use quando a duvida for sobre cadastro e conta: senha do aplicativo/portal, atualizar dados,
+  finalizar cadastro ou domicilio bancario.
+status: active
+symptoms:
+  - "esqueci a senha"
+  - "redefinir senha"
+  - "atualizar dados"
+  - "finalizar cadastro"
+  - "mudar domicilio bancario"
+  - "trocar conta bancaria"
+  - "acessar o aplicativo"
+  - "alterar cadastro"
+prerequisites:
+  - Mensagem do cliente recebida (user_id e sessao ja validados pelo canal).
+authorized_tools:
+  - search_knowledge
+  - search_web_pages
+skills:
+  - skill_cadastro_e_conta
+steps:
+  - step_id: entender_duvida
+    instruction: >-
+      Identifique a necessidade (senha, dados cadastrais, finalizar cadastro, domicilio bancario) e
+      onde o cliente quer fazer (aplicativo ou portal).
+    on_success: consultar_base
+    on_failure: pedir_esclarecimento
+  - step_id: pedir_esclarecimento
+    instruction: >-
+      Faca UMA pergunta objetiva para obter o dado que falta e aguarde a resposta do cliente.
+    on_success: consultar_base
+    on_failure: escalar
+  - step_id: consultar_base
+    tool: search_knowledge
+    instruction: >-
+      Verifique se a base de conhecimento (busca vetorial) ja tem conteudo que responda. Se tiver,
+      responda so com a base e NAO acesse a web.
+    on_success: responder
+    on_failure: consultar_web
+  - step_id: consultar_web
+    tool: search_web_pages
+    instruction: >-
+      A base nao responde: consulte as fontes web do assunto e salve na base so os trechos relevantes.
+      Costumam responder as paginas 'Cadastro' da Central de Ajuda (redefinir senha, atualizar dados,
+      finalizar cadastro, domicilio bancario).
+    on_success: responder
+    on_failure: escalar
+  - step_id: responder
+    instruction: >-
+      De o passo a passo do canal pedido e avise sobre documentos ou pre-requisitos que a fonte cite.
+      Para senha, oriente o fluxo de redefinicao; nunca peca a senha atual.
+    on_success: confirmar_resolucao
+    on_failure: escalar
+  - step_id: confirmar_resolucao
+    instruction: >-
+      Pergunte se a duvida foi resolvida. Se nao, reformule a explicacao uma vez e, persistindo,
+      escale.
+    on_success: closed
+    on_failure: escalar
+  - step_id: escalar
+    instruction: >-
+      Diga com transparencia o que nao foi encontrado e oriente o cliente a procurar a central de
+      atendimento da Getnet. Nao use siglas internas na conversa.
+    on_success: closed
+    on_failure: closed
+decision_points:
+  - question: A base de conhecimento responde a duvida deste assunto?
+    if_yes: responder so com a base (nao acessar a web)
+    if_no: consultar as fontes web do assunto e salvar so o relevante na base
+  - question: Falta algum dado do cliente para responder com precisao?
+    if_yes: fazer UMA pergunta objetiva
+    if_no: responder com o que a fonte traz
+exceptions:
+  - "Nunca peca, receba ou repita senha, token, CPF/CNPJ completos ou dados bancarios do cliente."
+  - "Se o cliente cola dado sensivel na mensagem, nao o repita e oriente a nao compartilha-lo."
+escalation_rules:
+  - "Bloqueio de conta, suspeita de fraude ou acesso indevido: encaminhe ao atendimento humano com prioridade."
+success_criteria:
+  - "O cliente sabe como concluir a alteracao pelo canal indicado."
+closure_criteria:
+  - O cliente confirmou que a duvida foi resolvida ou foi orientado a procurar a central de atendimento.

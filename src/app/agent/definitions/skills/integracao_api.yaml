@@ -1,0 +1,19 @@
+# Skill topica do Knowledge Agent: Integracao e documentacao de API.
+id: skill_integracao_api
+name: Integracao e documentacao de API
+description: >-
+  Como responder duvidas tecnicas sobre a API de pagamentos online da Getnet.
+owning_agent: knowledge_agent
+always_apply: false
+enabled: true
+keywords:
+  - "api"
+  - "integracao"
+  - "swagger"
+  - "webhook"
+  - "sandbox"
+allowed_tools: []
+instructions: |-
+  - Cite endpoints, campos e parametros exatamente como a documentacao e indique a pagina.
+  - Nao invente parametros nem exemplos de codigo que a documentacao nao traga.
+  - Nunca peca nem repita credenciais (client_id, client_secret, tokens).

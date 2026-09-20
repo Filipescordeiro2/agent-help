@@ -1,0 +1,61 @@
+# =============================================================================
+# O que VAI para o repositorio: codigo (src/), testes (tests/), empacotamento (pyproject.toml,
+# Dockerfile, docker-compose.yml, docker/ com a observabilidade), .env.example, o README.md (unica
+# documentacao) e a collection do Postman (docs/postman/). Todo o resto fica de fora.
+# =============================================================================
+
+# --- Segredos: NUNCA versionar (o .env real e a chave do OpenRouter) -----------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Ambiente e caches Python --------------------------------------------------------------------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# --- Ferramentas de IDE/SO -----------------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Artefatos de execucao (logs, dumps, dados locais dos contêineres) ---------------------------
+*.log
+*.tmp
+*.bak
+tmp/
+scratch/
+mongodb_data/
+grafana_data/
+
+# --- Documentacao de trabalho: a documentacao oficial e o README.md ------------------------------
+# (guia, ADRs, specs, arquitetura, prompts e rascunhos ficam so na maquina de quem escreveu)
+docs/*
+!docs/postman/
+.specify/
+specs/
+.claude/
+
+# --- Utilitario do detect-secrets: o baseline e regenerado pelo pre-commit -----------------------
+# (mantido: .pre-commit-config.yaml e .secrets.baseline fazem parte do fluxo de qualidade)
+
+# Collections antigas (completas): ficam so localmente
+docs/postman/getnet-multiagent.postman_collection.json
+docs/postman/getnet-local.postman_environment.json

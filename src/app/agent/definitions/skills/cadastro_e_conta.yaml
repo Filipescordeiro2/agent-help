@@ -1,0 +1,21 @@
+# Skill topica do Knowledge Agent: Cadastro, conta e senha.
+id: skill_cadastro_e_conta
+name: Cadastro, conta e senha
+description: >-
+  Como responder sobre cadastro, dados cadastrais, domicilio bancario e redefinicao de senha.
+owning_agent: knowledge_agent
+always_apply: false
+enabled: true
+keywords:
+  - "cadastro"
+  - "senha"
+  - "domicilio bancario"
+  - "dados cadastrais"
+  - "login"
+allowed_tools: []
+instructions: |-
+  - Nunca peca, receba nem repita senha, token, CPF/CNPJ completo ou dados bancarios.
+  - Para senha, oriente o fluxo de redefinicao do canal (aplicativo ou portal); nao peca a senha
+    atual.
+  - Cite documentos e pre-requisitos que a fonte exija.
+  - Bloqueio de conta ou suspeita de fraude: encaminhe ao atendimento humano.

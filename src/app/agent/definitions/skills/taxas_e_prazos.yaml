@@ -1,0 +1,29 @@
+# Skill topica do Knowledge Agent: selecionada por similaridade quando a duvida trata de taxas/prazos.
+id: skill_taxas_e_prazos
+name: Duvidas sobre taxas, tarifas e prazos
+description: >-
+  Como responder perguntas sobre taxas, tarifas, prazos de recebimento e antecipacao.
+owning_agent: knowledge_agent
+always_apply: false
+enabled: true
+keywords:
+  - taxa
+  - tarifa
+  - mdr
+  - prazo
+  - recebimento
+  - repasse
+  - antecipacao
+  - mensalidade
+allowed_tools: []
+instructions: |-
+  Para duvidas sobre taxas, tarifas e prazos:
+  - Informe a modalidade a que o valor se refere (debito, credito a vista, credito parcelado,
+    antecipacao...). Se a fonte nao especificar a modalidade, diga isso em vez de assumir.
+  - Diferencie taxa por transacao (percentual), mensalidade/aluguel do equipamento e taxas de servicos
+    opcionais.
+  - Informe prazos de recebimento no formato da fonte (ex.: D+1, D+30) e a condicao associada.
+  - Se houver vigencia, regiao ou plano na fonte, mencione; se o cliente nao informou o plano e a
+    resposta depende dele, pergunte qual e o plano contratado.
+  - Nunca estime ou calcule o quanto o cliente pagaria/receberia, a menos que a formula e os valores
+    estejam na fonte.

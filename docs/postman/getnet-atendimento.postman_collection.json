@@ -1,0 +1,1567 @@
+{
+  "info": {
+    "name": "Getnet Atendimento - sessoes, mensagens, fontes web e auditoria",
+    "description": "Collection enxuta do atendimento: saude e docs, sessoes e mensagens (incluindo o suporte guiado com abertura de chamado), fontes web homologadas e auditoria. A chave do OpenRouter NAO vem preenchida: informe-a na variavel `llm_api_key` do ambiente (tipo secret, fica so na sua maquina). Importe tambem `getnet-atendimento.postman_environment.json`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-Internal-Service-Token",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{internal_token}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "01 - Saude e Docs",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status OK', () => pm.expect(pm.response.json().status).to.eql('OK'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ready",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ready"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/openapi.json",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
+            },
+            "description": "Swagger UI: {{base_url}}/docs",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Atendimento (sessoes, mensagens e gestao de sessoes)",
+      "item": [
+        {
+          "name": "Criar sessao",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Channel",
+                "value": "web"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions"
+              ]
+            },
+            "description": "Identidade nos headers: X-User-Id (variavel user_id, enviado pelo script da collection) e X-Channel."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const value = json.session_id;",
+                  "if (value) { pm.environment.set('session_id', value); console.log('session_id =', value); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mensagem 1 - saudacao (Ola)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-Session-Id",
+                "value": "{{session_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Ola\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Saudacao (Ola, Oi, Bom dia, Obrigado, Tchau, 'o que voce faz?'): o agente responde na hora com uma mensagem de boas-vindas que lista o que sabe fazer e da exemplos de perguntas, sem consultar a base nem os sites e sem chamar o modelo. Se a mensagem trouxer uma pergunta junto ('Ola, como estorno?'), segue o fluxo normal. Primeira mensagem da conversa. Para CONTINUAR a conversa, basta enviar a proxima mensagem (proximas requests desta pasta) na MESMA sessao: nao rode 'Criar sessao' de novo, pois isso troca o session_id e zera o contexto."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('boas-vindas amigavel (status OK, agente welcome)', () => { pm.expect(r.status).to.eql('OK'); pm.expect(r.agent).to.eql('welcome'); });",
+                  "if (r.metadata && r.metadata.execution_id) pm.environment.set('execution_id', r.metadata.execution_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mensagem 2 - continuar a conversa (base vetorial primeiro, depois site)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-Session-Id",
+                "value": "{{session_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Como faco para estornar uma venda na maquininha?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Mesma sessao da mensagem anterior (session_id na URL e em X-Session-Id). 1a vez: a base vetorial nao tem a resposta, entao o agente consulta as fontes web padrao (Central de Ajuda), responde e SALVA so os trechos relevantes. Repetindo a pergunta, a resposta sai da base, sem ir ao site. Requer o header X-API-Key-LLM (variavel llm_api_key). status esperado: OK; se nem a base nem os sites souberem: INSUFFICIENT_CONTEXT com a orientacao de procurar a central de atendimento."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('AgentResponse valido', () => { pm.expect(r).to.have.property('status'); pm.expect(r).to.have.property('metadata'); });",
+                  "pm.test('grounding_score coerente com o status', () => { if (r.status !== 'OK') pm.expect(r.metadata.grounding_score).to.eql(null); else pm.expect(r.metadata.grounding_score).to.be.within(0, 5); });",
+                  "if (r.metadata && r.metadata.execution_id) pm.environment.set('execution_id', r.metadata.execution_id);",
+                  "if (r.sources && r.sources.length) { console.log('fontes:', JSON.stringify(r.sources)); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mensagem 3 - pergunta de acompanhamento (Pix)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-Session-Id",
+                "value": "{{session_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"E como habilito o Pix na minha maquininha?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Continuacao da mesma conversa. Depois, veja o porque de cada resposta em '10 - Auditoria'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('AgentResponse valido', () => pm.expect(r).to.have.property('status'));",
+                  "if (r.metadata && r.metadata.execution_id) pm.environment.set('execution_id', r.metadata.execution_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mensagem - fora da base e dos sites (central de atendimento)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-Session-Id",
+                "value": "{{session_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Qual foi o faturamento da Getnet em 1998?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Nem a base nem as fontes web tem a informacao: o agente NAO inventa e orienta o cliente a contatar a central de atendimento (status INSUFFICIENT_CONTEXT). Nada e salvo na base."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('AgentResponse valido', () => pm.expect(r).to.have.property('status'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mensagem - com URL na mensagem (RAG web)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-Session-Id",
+                "value": "{{session_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Segundo {{web_url}} , como faco para redefinir a senha do aplicativo?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "1) consulta a base vetorial; 2) se nao responde e ha URL na mensagem, acessa a pagina e SALVA so os trechos relevantes; 3) proximas perguntas do tema saem da base. sources[].url indica a pagina de origem."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('AgentResponse valido', () => pm.expect(r).to.have.property('status'));",
+                  "if (r.sources && r.sources.length) { console.log('fontes:', JSON.stringify(r.sources)); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mensagem - problema no dispositivo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-Session-Id",
+                "value": "{{session_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Minha maquininha nao conecta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.json().metadata) pm.environment.set('execution_id', pm.response.json().metadata.execution_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mensagem - multi-agente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-Session-Id",
+                "value": "{{session_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Qual a taxa da maquininha e ela esta com problema, nao conecta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mensagem - ambigua (esclarecimento)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-Session-Id",
+                "value": "{{session_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Preciso de ajuda\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obter sessao",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Execucoes da sessao",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}/executions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}",
+                "executions"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obter execucao",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/executions/{{execution_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "executions",
+                "{{execution_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retomar execucao",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/executions/{{execution_id}}/resume",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "executions",
+                "{{execution_id}}",
+                "resume"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Retoma uma execucao interrompida (usa a mensagem original)."
+          }
+        },
+        {
+          "name": "Fechar sessao",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}/close",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}",
+                "close"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar agentes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/agents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obter agente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/agents/knowledge_agent",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agents",
+                "knowledge_agent"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Suporte guiado e chamados (tickets)",
+      "item": [
+        {
+          "name": "Criar sessao de suporte",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Channel",
+                "value": "web"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions"
+              ]
+            },
+            "description": "Sessao exclusiva do cenario de suporte guiado (guarda o id em support_session_id)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const value = json.session_id;",
+                  "if (value) { pm.environment.set('support_session_id', value); console.log('support_session_id =', value); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suporte 1 - problema vago (o agente PERGUNTA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Session-Id",
+                "value": "{{support_session_id}}"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{support_session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{support_session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"preciso de ajuda com minha maquininha\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Mensagem vaga: o agente nao busca solucao nem abre chamado; faz UMA pergunta (ate 2 perguntas por caso)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('o agente pergunta e NAO abre chamado', () => { const r = pm.response.json(); pm.expect(r.status).to.eql('CLARIFICATION_REQUIRED'); pm.expect(r.metadata.ticket_id).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suporte 2 - erro informado (o agente passa o passo a passo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Session-Id",
+                "value": "{{support_session_id}}"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{support_session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{support_session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"estou com o Erro ADQ 4-83: erro de integracao com as bandeiras\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Problema entendido: o agente busca o passo a passo (base e paginas de ajuda) e responde 'Tente fazer isso: ... Deu certo?'. O caso fica aguardando a confirmacao."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('passa a solucao e pergunta se deu certo', () => { const r = pm.response.json(); pm.expect(r.status).to.eql('OK'); pm.expect(r.message).to.include('Tente fazer isso'); pm.expect(r.message).to.include('Deu certo?'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suporte 3 - nao deu certo (abre o chamado)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Session-Id",
+                "value": "{{support_session_id}}"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "X-API-Key-LLM",
+                "value": "{{llm_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{support_session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{support_session_id}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"nao deu certo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "O cliente diz que nao resolveu: o agente abre o chamado (so com tudo validado) e devolve o numero (ex.: TKT-000001). Guarda o numero em ticket_id."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('chamado aberto com numero', () => { pm.expect(r.status).to.eql('ESCALATION_REQUIRED'); pm.expect(r.metadata.ticket_id).to.match(/^TKT-/); });",
+                  "if (r.metadata && r.metadata.ticket_id) pm.environment.set('ticket_id', r.metadata.ticket_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chamados - listar (por cliente)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tickets?user_id={{user_id}}&limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{user_id}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Chamados mais recentes primeiro. Filtros: user_id, status (OPEN | IN_PROGRESS | CLOSED), limit."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chamados - obter (pacote completo para o atendente)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tickets/{{ticket_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tickets",
+                "{{ticket_id}}"
+              ]
+            },
+            "description": "Cliente, conversa (mascarada), analise previa da IA (problema, codigo de erro, solucoes tentadas, itens validados) e motivo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Suporte guiado: entender o problema (pergunta se estiver vago), passar a solucao e, se nao resolver, abrir o chamado com a conversa e a analise previa."
+    },
+    {
+      "name": "04 - Fontes web homologadas",
+      "item": [
+        {
+          "name": "Listar fontes web",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/web-sources",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "web-sources"
+              ]
+            },
+            "description": "Padrao: site.getnet.com.br, www.getnet.net/pt e docs.globalgetnet.com (definicoes do agente, carregadas no boot). Salva a primeira em web_source_id."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('tem as 3 fontes padrao', () => pm.expect(pm.response.json().filter(s => s.origin === 'default').length).to.be.at.least(3));",
+                  "const list = pm.response.json(); if (list.length) { pm.environment.set('web_source_id', list[0].source_id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar fonte web",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/web-sources",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "web-sources"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Exemplo - central de ajuda\",\n  \"url\": \"https://www.example.com/ajuda\",\n  \"description\": \"PRINCIPAL: o que e o site (ex.: central de ajuda do produto X).\",\n  \"usage\": \"USO: quando o agente deve consulta-lo (ex.: duvidas sobre o produto X).\",\n  \"topics\": [\n    \"ajuda\",\n    \"produto x\"\n  ],\n  \"priority\": 50,\n  \"enabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cadastra um novo site que o agente pode consultar quando a base nao responde. description = principal (o que e o site); usage = uso (quando consultar); topics = temas. Falhas: 400 WEB_URL_* (URL invalida/interna) ou 409 (URL ja cadastrada)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 ou 409 (ja cadastrada)', () => pm.expect(pm.response.code).to.be.oneOf([200, 409]));",
+                  "if (pm.response.code === 200) { pm.environment.set('web_source_id', pm.response.json().source_id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obter fonte web",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/web-sources/{{web_source_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "web-sources",
+                "{{web_source_id}}"
+              ]
+            },
+            "description": "Mostra tambem as estatisticas: consulted_count, useful_count, last_status."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar / habilitar-desabilitar fonte",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/web-sources/{{web_source_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "web-sources",
+                "{{web_source_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Exemplo - central de ajuda\",\n  \"url\": \"https://www.example.com/ajuda\",\n  \"description\": \"Central de ajuda do produto X.\",\n  \"usage\": \"Duvidas sobre o produto X.\",\n  \"topics\": [\n    \"ajuda\",\n    \"produto x\"\n  ],\n  \"priority\": 40,\n  \"enabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Troque enabled para false para o agente parar de consultar a fonte."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Testar fonte web (o que o agente leria)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/web-sources/{{web_source_id}}/test",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "web-sources",
+                "{{web_source_id}}",
+                "test"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Acessa a fonte agora (mesmas protecoes do agente) e devolve titulo, tamanho do texto, links encontrados e uma previa. Nada e salvo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('mostra ok/erro', () => pm.expect(pm.response.json()).to.have.property('ok'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover fonte web",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/web-sources/{{web_source_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "web-sources",
+                "{{web_source_id}}"
+              ]
+            },
+            "description": "Remove a fonte selecionada em web_source_id."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('removido', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Auditoria (fluxo do agente por sessao)",
+      "item": [
+        {
+          "name": "Auditoria da sessao (fluxo completo + por que)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit/sessions/{{session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit",
+                "sessions",
+                "{{session_id}}"
+              ]
+            },
+            "description": "Informe o session_id (variavel session_id, criada em 02) e veja, turno a turno: a entrada do usuario, o Router, cada no/agente/ferramenta/chamada ao modelo com seus retornos, e `explanation` (em portugues) com o PORQUE da resposta. Conteudo sensivel (cartao, CPF/CNPJ, e-mail, telefone, chaves) vem mascarado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const a = pm.response.json();",
+                  "pm.test('tem turnos', () => pm.expect(a.total_turns).to.be.at.least(1));",
+                  "pm.test('explica o porque', () => pm.expect(a.turns[0].explanation.length).to.be.above(0));",
+                  "console.log(a.turns[a.turns.length - 1].explanation.join('\\n'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auditoria da sessao (sem prompts dos modelos)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit/sessions/{{session_id}}?include_llm=false",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit",
+                "sessions",
+                "{{session_id}}"
+              ],
+              "query": [
+                {
+                  "key": "include_llm",
+                  "value": "false",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Mesma auditoria sem os eventos llm_io (prompts e saidas dos modelos): resposta menor."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auditoria de um turno (execution_id)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit/executions/{{execution_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit",
+                "executions",
+                "{{execution_id}}"
+              ]
+            },
+            "description": "Um unico turno. O execution_id vem em metadata.execution_id de cada resposta (a request de mensagem o salva)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eventos brutos da sessao (filtro por tipo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit/sessions/{{session_id}}/events?event_type=tool_call&limit=50",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit",
+                "sessions",
+                "{{session_id}}",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "event_type",
+                  "value": "tool_call",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Tipos: user_input, node_call, agent_call, tool_call, llm_io, llm_call, knowledge_decision, grounding_evaluated, final_response."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

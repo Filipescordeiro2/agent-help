@@ -1,0 +1,244 @@
+# Central de Ajuda Getnet - codigos de erro da maquininha (Erro ADQ, IDL, S e leitora NFC).
+# Cada pagina traz quando o erro ocorre e o passo a passo (teclas de funcao) para resolver.
+sources:
+  - id: ws_erro_adq_4_83
+    name: "Get Ajuda - Erro ADQ 4-83 (erro de integracao com as bandeiras)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-4-83/
+    description: >-
+      Erro ADQ 4-83: erro de integracao com as bandeiras. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 4-83 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 4-83", "adq 4-83", "4-83", "codigo de erro", "erro na maquininha", "erro de integracao com as bandeiras"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_4_91
+    name: "Get Ajuda - Erro ADQ 4-91 (erro na aprovacao da venda)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-4-91/
+    description: >-
+      Erro ADQ 4-91: erro na aprovacao da venda. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 4-91 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 4-91", "adq 4-91", "4-91", "codigo de erro", "erro na maquininha", "erro na aprovacao da venda"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_50
+    name: "Get Ajuda - Erro ADQ 1-50 (erro de leitura)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-50/
+    description: >-
+      Erro ADQ 1-50: erro de leitura. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-50 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-50", "adq 1-50", "1-50", "codigo de erro", "erro na maquininha", "erro de leitura"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_4_30
+    name: "Get Ajuda - Erro ADQ 4-30 (falha na comunicacao na maquininha)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-4-30/
+    description: >-
+      Erro ADQ 4-30: falha na comunicacao na maquininha. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 4-30 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 4-30", "adq 4-30", "4-30", "codigo de erro", "erro na maquininha", "falha na comunicacao na maquininha"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_4_23
+    name: "Get Ajuda - Erro ADQ 4-23 (falha na transacao)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-4-23/
+    description: >-
+      Erro ADQ 4-23: falha na transacao. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 4-23 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 4-23", "adq 4-23", "4-23", "codigo de erro", "erro na maquininha", "falha na transacao"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_4_27
+    name: "Get Ajuda - Erro ADQ 4-27 (erro na comunicacao dos sistemas)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-4-27/
+    description: >-
+      Erro ADQ 4-27: erro na comunicacao dos sistemas. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 4-27 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 4-27", "adq 4-27", "4-27", "codigo de erro", "erro na maquininha", "erro na comunicacao dos sistemas"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_idl_1_04
+    name: "Get Ajuda - Erro IDL 1-04 (erro de integracao com as bandeiras/sistemas)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-idl-1-04/
+    description: >-
+      Erro IDL 1-04: erro de integracao com as bandeiras/sistemas. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo IDL 1-04 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro idl 1-04", "idl 1-04", "1-04", "codigo de erro", "erro na maquininha", "erro de integracao com as bandeiras/sistemas"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_idl_1_36
+    name: "Get Ajuda - Erro IDL 1-36 (erro de integracao com as bandeiras/sistemas)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-idl-1-36/
+    description: >-
+      Erro IDL 1-36: erro de integracao com as bandeiras/sistemas. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo IDL 1-36 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro idl 1-36", "idl 1-36", "1-36", "codigo de erro", "erro na maquininha", "erro de integracao com as bandeiras/sistemas"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_s_2074
+    name: "Get Ajuda - Erro S-2074 (erro de comunicacao)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-s-2074/
+    description: >-
+      Erro S-2074: erro de comunicacao. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo S-2074 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro s-2074", "s 2074", "2074", "codigo de erro", "erro na maquininha", "erro de comunicacao"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_02
+    name: "Get Ajuda - Erro ADQ 1-02 (ocorre quando nao finaliza um procedimento iniciado na maquininha)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-02/
+    description: >-
+      Erro ADQ 1-02: ocorre quando nao finaliza um procedimento iniciado na maquininha. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-02 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-02", "adq 1-02", "1-02", "codigo de erro", "erro na maquininha", "ocorre quando nao finaliza um procedimento iniciado na maquininha"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_21
+    name: "Get Ajuda - Erro ADQ 1-21 (erro na transacao)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-21/
+    description: >-
+      Erro ADQ 1-21: erro na transacao. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-21 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-21", "adq 1-21", "1-21", "codigo de erro", "erro na maquininha", "erro na transacao"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_3_30
+    name: "Get Ajuda - Erro ADQ 3-30 (erro de criptografia)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-3-30/
+    description: >-
+      Erro ADQ 3-30: erro de criptografia. Quando ocorre: ao deixar de utilizar a maquininha por um periodo. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 3-30 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 3-30", "adq 3-30", "3-30", "codigo de erro", "erro na maquininha", "erro de criptografia"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_33
+    name: "Get Ajuda - Erro ADQ 1-33 (erro de leitura)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-33/
+    description: >-
+      Erro ADQ 1-33: erro de leitura. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-33 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-33", "adq 1-33", "1-33", "codigo de erro", "erro na maquininha", "erro de leitura"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_07
+    name: "Get Ajuda - Erro ADQ 1-07 (maquininha nao inicializada)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-07/
+    description: >-
+      Erro ADQ 1-07: maquininha nao inicializada. Quando ocorre: ao tentar utilizar a maquininha. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-07 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-07", "adq 1-07", "1-07", "codigo de erro", "erro na maquininha", "maquininha nao inicializada"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_idl_1_08
+    name: "Get Ajuda - Erro IDL 1-08 (erro de integracao com as bandeiras/cartao)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-idl-1-08/
+    description: >-
+      Erro IDL 1-08: erro de integracao com as bandeiras/cartao. Quando ocorre: erro aparece sozinho (sem inserir o cartao). Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo IDL 1-08 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro idl 1-08", "idl 1-08", "1-08", "codigo de erro", "erro na maquininha", "erro de integracao com as bandeiras/cartao"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_19
+    name: "Get Ajuda - Erro ADQ 1-19 (erro de conexao)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-19/
+    description: >-
+      Erro ADQ 1-19: erro de conexao. Quando ocorre: no processamento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-19 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-19", "adq 1-19", "1-19", "codigo de erro", "erro na maquininha", "erro de conexao"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_06
+    name: "Get Ajuda - Erro ADQ 1-06 (maquininha nao configurada)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-06/
+    description: >-
+      Erro ADQ 1-06: maquininha nao configurada. Quando ocorre: ao tentar utilizar a maquininha. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-06 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-06", "adq 1-06", "1-06", "codigo de erro", "erro na maquininha", "maquininha nao configurada"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_87
+    name: "Get Ajuda - Erro ADQ 1-87 (erro com o registro do CHIP)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-87/
+    description: >-
+      Erro ADQ 1-87: erro com o registro do CHIP. Quando ocorre: no momento da transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-87 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-87", "adq 1-87", "1-87", "codigo de erro", "erro na maquininha", "erro com o registro do chip"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_nfc
+    name: "Get Ajuda - Erro na leitora NFC"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-nfc/
+    description: >-
+      Erro na leitora NFC: erro na realizacao de vendas por aproximacao. Quando ocorre: ao aproximar o cartao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo de erro da leitora NFC ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro na leitora nfc", "nfc", "codigo de erro", "erro na maquininha", "leitora nfc", "aproximacao", "pagamento por aproximacao", "cartao nao le", "tap"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_18
+    name: "Get Ajuda - Erro ADQ 1-18 (erro de comunicacao)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-18/
+    description: >-
+      Erro ADQ 1-18: erro de comunicacao. Quando ocorre: maquininha com sinal fraco e nao conclui a transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-18 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-18", "adq 1-18", "1-18", "codigo de erro", "erro na maquininha", "erro de comunicacao"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_84
+    name: "Get Ajuda - Erro ADQ 1-84 (problema de conexao)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-84/
+    description: >-
+      Erro ADQ 1-84: problema de conexao. Quando ocorre: oscilacao de sinal na maquininha. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-84 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-84", "adq 1-84", "1-84", "codigo de erro", "erro na maquininha", "problema de conexao"]
+    priority: 40
+    enabled: true
+
+  - id: ws_erro_adq_1_85
+    name: "Get Ajuda - Erro ADQ 1-85 (problema de comunicacao com a operadora)"
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-1-85/
+    description: >-
+      Erro ADQ 1-85: problema de comunicacao com a operadora. Quando ocorre: durante a transacao. Traz o passo a passo para resolver na propria maquininha (teclas de funcao) e depois fazer uma venda teste.
+    usage: >-
+      Use quando o cliente informar o codigo ADQ 1-85 ou descrever esse problema na maquininha (erro na tela, venda que nao conclui).
+    topics: ["erro adq 1-85", "adq 1-85", "1-85", "codigo de erro", "erro na maquininha", "problema de comunicacao com a operadora"]
+    priority: 40
+    enabled: true

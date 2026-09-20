@@ -1,0 +1,46 @@
+# Fontes web PADRAO que o agente N1 pode consultar (fora do ecossistema) quando a base de
+# conhecimento nao responde. Carregadas no boot; novas fontes entram pela API (POST /api/v1/web-sources).
+#
+# description = PRINCIPAL (o que e o site) | usage = USO (quando consulta-lo) | topics = temas.
+# priority: menor = primeiro. Quando o agente nao sabe, consulta todas as fontes habilitadas e ve
+# qual de fato tem a informacao; se nenhuma tiver, orienta o cliente a procurar a central de
+# atendimento.
+sources:
+  - id: ws_getnet_site_principal_br
+    name: Getnet Brasil - site principal
+    url: https://site.getnet.com.br/
+    description: >-
+      Site principal da Getnet no Brasil: maquininhas, solucoes financeiras, conta digital, Get Ajuda
+      e Fale Conosco.
+    usage: >-
+      Use para duvidas de clientes brasileiros sobre maquininhas, planos, taxas, conta, ajuda e canais
+      de atendimento.
+    topics: [maquininha, taxa, plano, conta, cartao, ajuda, atendimento, brasil, produtos]
+    priority: 10
+    enabled: true
+
+  - id: ws_getnet_net_pt
+    name: Getnet - site institucional completo
+    url: https://www.getnet.net/pt/
+    description: >-
+      Site oficial da Getnet com informacoes completas: solucoes de pagamento na loja e online, paises
+      onde atua, programadores (developers) e suporte.
+    usage: >-
+      Use para duvidas gerais sobre produtos e solucoes, funcionalidades, pagamentos na loja e
+      online, e em quais paises a Getnet atua.
+    topics: [produtos, solucoes, pagamentos, loja, online, ecommerce, paises, suporte, programadores]
+    priority: 20
+    enabled: true
+
+  - id: ws_getnet_docs_global
+    name: Getnet Docs - documentacao global para desenvolvedores
+    url: https://docs.globalgetnet.com/pt/products/online-payments/regional-api/swagger#description/introduction
+    description: >-
+      Documentacao tecnica global da Getnet para desenvolvedores: API de pagamentos (Global API),
+      swagger, autenticacao, pagamentos, cartoes, parcelamento e gestao de registros de pagamento.
+    usage: >-
+      Use para duvidas tecnicas de integracao: API, autenticacao, endpoints, pagamentos online,
+      cartoes, parcelas, links de pagamento e webhooks.
+    topics: [api, integracao, desenvolvedor, autenticacao, endpoint, swagger, pagamento, cartao, parcelamento, webhook]
+    priority: 30
+    enabled: true

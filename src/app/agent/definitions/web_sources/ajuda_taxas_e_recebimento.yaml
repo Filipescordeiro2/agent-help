@@ -1,0 +1,43 @@
+# Central de Ajuda Getnet - taxas, planos de recebimento e simulador.
+# description = PRINCIPAL (o que e a pagina) | usage = USO (quando consultar) | topics = temas.
+sources:
+  - id: ws_ajuda_taxas_por_transacao
+    name: Get Ajuda - Taxas por transacao (MDR)
+    url: https://site.getnet.com.br/get-ajuda-taxas/taxas-por-transacao/
+    description: >-
+      Artigo da Central de Ajuda que explica o que sao as taxas da Getnet (MDR, taxa por transacao), do
+      que elas dependem (tipo de transacao, volume de vendas e segmento do negocio) e como consulta-las.
+    usage: >-
+      Use para duvidas sobre taxas, MDR, quanto a Getnet cobra por transacao e como consultar as taxas
+      contratadas.
+    topics: [taxa, taxas, mdr, tarifa, custo, cobranca, transacao, quanto custa, percentual, consultar taxas]
+    priority: 40
+    enabled: true
+
+  - id: ws_ajuda_plano_recebimento_reduzido
+    name: Get Ajuda - Plano de Recebimento Reduzido
+    url: https://site.getnet.com.br/get-ajuda-receba-ja/plano-de-recebimento-reduzido/
+    description: >-
+      Central de Ajuda sobre o plano de recebimento reduzido, com as perguntas frequentes: o que e o
+      plano, quais planos estao disponiveis, onde os valores sao depositados, como contratar, se existe
+      mensalidade, como consultar as taxas, se ha carencia para alterar ou cancelar, se as vendas feitas
+      antes da contratacao entram no plano e o que acontece ao cancelar.
+    usage: >-
+      Use para duvidas sobre receber antes do prazo padrao, receba ja, prazo de recebimento menor,
+      contratar ou cancelar o plano de recebimento reduzido, carencia, mensalidade e taxas do plano.
+    topics: [plano de recebimento reduzido, receba ja, receber antes, prazo de recebimento, antecipacao, recebimento em 2 dias, contratar plano, cancelar plano, carencia, mensalidade, taxas do plano, onde recebo os valores]
+    priority: 40
+    enabled: true
+
+  - id: ws_ajuda_simulador_vendas
+    name: Get Ajuda - Simulador ou Calculadora de Vendas
+    url: https://site.getnet.com.br/get-ajuda-maquininha/simulador-calculadora-de-vendas/
+    description: >-
+      Explica o simulador (calculadora) de vendas da Getnet: ver o valor liquido de uma venda antes de
+      realiza-la, quanto o cliente vai pagar, simular o repasse da taxa ao cliente e onde simular.
+    usage: >-
+      Use para calcular quanto o lojista vai receber de uma venda, simular parcelas e taxas e repassar a
+      taxa ao cliente.
+    topics: [simulador, calculadora de vendas, simular venda, valor liquido, quanto vou receber, repasse da taxa, parcelamento, taxa]
+    priority: 41
+    enabled: true

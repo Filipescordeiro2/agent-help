@@ -1,0 +1,15 @@
+# Produto Getnet - Link de Pagamento.
+sources:
+  - id: ws_produto_link_de_pagamento
+    name: Getnet - Link de Pagamento
+    url: https://site.getnet.com.br/link-de-pagamento/
+    description: >-
+      Pagina do produto Link de Pagamento Getnet: vender online sem site, link personalizavel, seguranca
+      antifraude, aceite de debito, credito, Pix e boleto, vendas pelo WhatsApp e redes sociais e venda
+      para estrangeiros com documento de identificacao (RNE).
+    usage: >-
+      Use para duvidas sobre link de pagamento: o que e, como funciona, formas de pagamento aceitas,
+      vender pelo WhatsApp, redes sociais ou online e como contratar.
+    topics: [link de pagamento, vender online, whatsapp, redes sociais, boleto, pix, credito, debito, antifraude, ecommerce, venda a distancia, estrangeiros, rne]
+    priority: 46
+    enabled: true

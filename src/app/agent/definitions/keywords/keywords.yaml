@@ -1,0 +1,181 @@
+# Keywords do dominio Getnet: termos, sinonimos e associacoes com intencoes, Skills e Playbooks.
+# O agente procura o termo e os sinonimos na mensagem do cliente; cada Keyword aponta para o
+# Playbook do assunto e para as Skills que ajudam (peso maior = escolhida primeiro).
+# Cada `term` deve ser unico (normalizado em minusculas). Os ids em `associated_*` precisam existir
+# nos arquivos de skills/playbooks.
+keywords:
+  - id: kw_taxa
+    term: taxa
+    synonyms: [tarifa, custo, valor, preco, mdr, percentual, "quanto custa"]
+    weight: 1.2
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_taxas_e_prazos]
+    associated_playbooks: [pb_taxas_e_prazos]
+
+  - id: kw_prazo
+    term: prazo
+    synonyms: [recebimento, repasse, liquidacao, "d+1", "d+30", "quando recebo", "credito em conta"]
+    weight: 1.2
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_taxas_e_prazos]
+    associated_playbooks: [pb_taxas_e_prazos]
+
+  - id: kw_antecipacao
+    term: antecipacao
+    synonyms: [antecipar, "antecipacao de recebiveis", "receber antes", adiantamento]
+    weight: 1.1
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_taxas_e_prazos]
+    associated_playbooks: [pb_taxas_e_prazos]
+
+  - id: kw_mensalidade
+    term: mensalidade
+    synonyms: [aluguel, "aluguel da maquininha", plano, "plano mensal"]
+    weight: 1.0
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_taxas_e_prazos]
+    associated_playbooks: [pb_taxas_e_prazos]
+
+  - id: kw_plano_recebimento
+    term: plano de recebimento
+    synonyms: ["recebimento reduzido", "receber mais rapido", "plano reduzido", "d+2"]
+    weight: 1.2
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_taxas_e_prazos]
+    associated_playbooks: [pb_taxas_e_prazos]
+
+  - id: kw_estorno
+    term: estorno
+    synonyms: [estornar, "cancelar venda", "cancelamento de venda", "devolver venda", "desfazer venda", "venda errada"]
+    weight: 1.3
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_estorno_e_chargeback]
+    associated_playbooks: [pb_estorno_e_chargeback]
+
+  - id: kw_chargeback
+    term: chargeback
+    synonyms: [contestacao, "compra nao reconhecida", disputa]
+    weight: 1.3
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_estorno_e_chargeback]
+    associated_playbooks: [pb_estorno_e_chargeback]
+
+  - id: kw_pix
+    term: pix
+    synonyms: ["pagamento instantaneo", "qr code", "chave pix", "pix por biometria", "pix na maquininha", "get tap"]
+    weight: 1.3
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_pix]
+    associated_playbooks: [pb_pix]
+
+  - id: kw_erro
+    term: erro
+    synonyms: ["codigo de erro", "erro adq", "erro idl", adq, idl, "mensagem de erro", "deu erro", travou, "falha na venda", nfc, "leitora nfc", "nao aproxima"]
+    weight: 1.4
+    related_intents: [KNOWLEDGE, CUSTOMER_SUPPORT]
+    associated_skills: [skill_erros_da_maquininha]
+    associated_playbooks: [pb_erros_da_maquininha]
+
+  - id: kw_senha
+    term: senha
+    synonyms: ["esqueci a senha", "redefinir senha", "trocar senha", "recuperar senha", login, "acessar o aplicativo"]
+    weight: 1.3
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_cadastro_e_conta]
+    associated_playbooks: [pb_cadastro_e_conta]
+
+  - id: kw_cadastro
+    term: cadastro
+    synonyms: ["atualizar dados", "dados cadastrais", "finalizar cadastro", "domicilio bancario", "conta bancaria", "trocar banco", credenciamento]
+    weight: 1.3
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_cadastro_e_conta]
+    associated_playbooks: [pb_cadastro_e_conta]
+
+  - id: kw_link_de_pagamento
+    term: link de pagamento
+    synonyms: ["link de cobranca", "cobrar por link", "vender pelo whatsapp", "vender online", checkout]
+    weight: 1.3
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_link_de_pagamento]
+    associated_playbooks: [pb_link_de_pagamento]
+
+  - id: kw_api
+    term: api
+    synonyms: [integracao, desenvolvedor, swagger, "documentacao da api", webhook, sandbox, e-commerce]
+    weight: 1.3
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_integracao_api]
+    associated_playbooks: [pb_integracao_api]
+
+  - id: kw_consultar_vendas
+    term: consultar vendas
+    synonyms: ["extrato de vendas", "relatorio de vendas", "minhas vendas", "historico de vendas"]
+    weight: 1.1
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_uso_da_maquininha]
+    associated_playbooks: [pb_uso_da_maquininha]
+
+  - id: kw_manual
+    term: manual
+    synonyms: ["guia da maquininha", tutorial, "como usar"]
+    weight: 0.9
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_uso_da_maquininha]
+    associated_playbooks: [pb_uso_da_maquininha]
+
+  - id: kw_manutencao
+    term: manutencao
+    synonyms: [defeito, quebrou, assistencia, "troca de maquininha", conserto]
+    weight: 0.9
+    related_intents: [KNOWLEDGE, CUSTOMER_SUPPORT]
+    associated_skills: [skill_uso_da_maquininha]
+    associated_playbooks: [pb_uso_da_maquininha]
+
+  - id: kw_conexao
+    term: conexao
+    synonyms: ["nao conecta", "sem conexao", offline, "sem sinal", wi-fi, wifi, chip, internet]
+    weight: 1.0
+    related_intents: [CUSTOMER_SUPPORT]
+    associated_skills: [skill_atendimento_n1_suporte_tecnico, skill_uso_da_maquininha]
+    associated_playbooks: [pb_uso_da_maquininha]
+
+  - id: kw_maquininha
+    term: maquininha
+    synonyms: [pos, terminal, "maquina de cartao", equipamento, "leitor de cartao"]
+    weight: 0.5
+    related_intents: [KNOWLEDGE, CUSTOMER_SUPPORT]
+    associated_skills: [skill_atendimento_n1_suporte_tecnico]
+    associated_playbooks: [pb_uso_da_maquininha]
+
+  - id: kw_cashback
+    term: cashback
+    synonyms: ["devolucao de dinheiro", bonus, pontos, beneficio]
+    weight: 0.8
+    related_intents: [KNOWLEDGE]
+    associated_skills: []
+    associated_playbooks: []
+
+  - id: kw_cancelamento
+    term: cancelamento
+    synonyms: ["encerrar conta", rescisao, "desistir do contrato"]
+    weight: 0.8
+    related_intents: [KNOWLEDGE, CUSTOMER_SUPPORT]
+    associated_skills: []
+    associated_playbooks: []
+
+  - id: kw_duvida
+    term: duvida
+    synonyms: ["como funciona", "quero saber", "gostaria de saber", "o que e", "como faco", informacao]
+    weight: 0.6
+    related_intents: [KNOWLEDGE]
+    associated_skills: [skill_atendimento_n1_duvidas]
+    associated_playbooks: []
+
+  - id: kw_atendente
+    term: atendente
+    synonyms: ["falar com humano", "falar com atendente", "suporte humano"]
+    weight: 0.7
+    related_intents: [CUSTOMER_SUPPORT]
+    associated_skills: [skill_atendimento_n1_duvidas]
+    associated_playbooks: []

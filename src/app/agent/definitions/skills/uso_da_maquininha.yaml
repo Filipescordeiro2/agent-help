@@ -1,0 +1,23 @@
+# Skill topica do Knowledge Agent: Uso e configuracao da maquininha.
+id: skill_uso_da_maquininha
+name: Uso e configuracao da maquininha
+description: >-
+  Como responder sobre vender, configurar, conectar ao Wi-Fi, consultar vendas e manutencao da
+  maquininha.
+owning_agent: knowledge_agent
+always_apply: false
+enabled: true
+keywords:
+  - "maquininha"
+  - "wifi"
+  - "vender"
+  - "manual"
+  - "manutencao"
+  - "configuracao"
+allowed_tools: []
+instructions: |-
+  - De o passo a passo numerado usando os nomes de menus e teclas exatamente como a fonte.
+  - Se o procedimento muda por modelo (Get Smart, Get Tap...) e o cliente nao disse o modelo,
+    pergunte.
+  - Para defeito fisico ou falha que os passos nao resolvem, oriente a manutencao conforme a
+    fonte.

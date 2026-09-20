@@ -1,0 +1,92 @@
+# Playbook do tipo de solicitacao: Integracao e documentacao de API.
+# Soma-se ao Playbook geral (pb_atendimento_duvidas_n1): aqui ficam as regras do assunto.
+# Escolhido pelas Keywords do assunto (ou por similaridade). As etapas com `tool` sao
+# executadas pelo pipeline antes da resposta (base primeiro; se nao responde, a web, e o que
+# for relevante fica salvo na base para as proximas perguntas).
+id: pb_integracao_api
+name: Integracao e documentacao de API
+objective: >-
+  Ajudar desenvolvedores e lojistas com integracao: onde esta a documentacao da API de pagamentos
+  online, autenticacao, ambientes e endpoints disponiveis.
+owning_agent: knowledge_agent
+parent: pb_atendimento_duvidas_n1
+when_to_use: >-
+  Use quando a duvida for tecnica de desenvolvedor: API de pagamentos online, autenticacao,
+  sandbox, webhook, Swagger.
+status: active
+symptoms:
+  - "api"
+  - "integracao"
+  - "documentacao da api"
+  - "swagger"
+  - "webhook"
+  - "sandbox"
+  - "ecommerce"
+  - "checkout"
+  - "autenticacao da api"
+prerequisites:
+  - Mensagem do cliente recebida (user_id e sessao ja validados pelo canal).
+authorized_tools:
+  - search_knowledge
+  - search_web_pages
+skills:
+  - skill_integracao_api
+steps:
+  - step_id: entender_duvida
+    instruction: >-
+      Identifique o objetivo tecnico (autenticar, criar pagamento, consultar transacao, webhook), o
+      ambiente (sandbox ou producao) e a linguagem, se relevante.
+    on_success: consultar_base
+    on_failure: pedir_esclarecimento
+  - step_id: pedir_esclarecimento
+    instruction: >-
+      Faca UMA pergunta objetiva para obter o dado que falta e aguarde a resposta do cliente.
+    on_success: consultar_base
+    on_failure: escalar
+  - step_id: consultar_base
+    tool: search_knowledge
+    instruction: >-
+      Verifique se a base de conhecimento (busca vetorial) ja tem conteudo que responda. Se tiver,
+      responda so com a base e NAO acesse a web.
+    on_success: responder
+    on_failure: consultar_web
+  - step_id: consultar_web
+    tool: search_web_pages
+    instruction: >-
+      A base nao responde: consulte as fontes web do assunto e salve na base so os trechos relevantes.
+      Costuma responder a documentacao da API regional de pagamentos online (Getnet Docs / Swagger).
+    on_success: responder
+    on_failure: escalar
+  - step_id: responder
+    instruction: >-
+      Responda com o nome exato dos endpoints, campos e parametros da documentacao e cite a pagina.
+      Nao invente parametros nem exemplos de codigo que a fonte nao traga.
+    on_success: confirmar_resolucao
+    on_failure: escalar
+  - step_id: confirmar_resolucao
+    instruction: >-
+      Pergunte se a duvida foi resolvida. Se nao, reformule a explicacao uma vez e, persistindo,
+      escale.
+    on_success: closed
+    on_failure: escalar
+  - step_id: escalar
+    instruction: >-
+      Diga com transparencia o que nao foi encontrado e oriente o cliente a procurar a central de
+      atendimento da Getnet. Nao use siglas internas na conversa.
+    on_success: closed
+    on_failure: closed
+decision_points:
+  - question: A base de conhecimento responde a duvida deste assunto?
+    if_yes: responder so com a base (nao acessar a web)
+    if_no: consultar as fontes web do assunto e salvar so o relevante na base
+  - question: Falta algum dado do cliente para responder com precisao?
+    if_yes: fazer UMA pergunta objetiva
+    if_no: responder com o que a fonte traz
+exceptions:
+  - "Nunca peca nem repita credenciais (client_id, client_secret, tokens): oriente a guarda-las com seguranca."
+escalation_rules:
+  - "Erro de integracao especifico da conta do cliente (ex.: credenciais recusadas) que so o suporte tecnico consegue investigar."
+success_criteria:
+  - "O desenvolvedor sabe qual endpoint usar e onde ler os detalhes."
+closure_criteria:
+  - O cliente confirmou que a duvida foi resolvida ou foi orientado a procurar a central de atendimento.

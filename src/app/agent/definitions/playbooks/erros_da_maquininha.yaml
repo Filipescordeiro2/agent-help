@@ -1,0 +1,96 @@
+# Playbook do tipo de solicitacao: Codigos de erro da maquininha.
+# Soma-se ao Playbook geral (pb_atendimento_duvidas_n1): aqui ficam as regras do assunto.
+# Escolhido pelas Keywords do assunto (ou por similaridade). As etapas com `tool` sao
+# executadas pelo pipeline antes da resposta (base primeiro; se nao responde, a web, e o que
+# for relevante fica salvo na base para as proximas perguntas).
+id: pb_erros_da_maquininha
+name: Codigos de erro da maquininha
+objective: >-
+  Resolver mensagens de erro da maquininha (Erro ADQ, IDL, S e falha na leitora NFC) com o passo a
+  passo da pagina de ajuda do codigo exato.
+owning_agent: knowledge_agent
+parent: pb_atendimento_duvidas_n1
+when_to_use: >-
+  Use quando aparecer um codigo ou mensagem de erro na maquininha (Erro ADQ, IDL, S-xxxx, falha
+  NFC) ou a venda nao concluir por erro.
+status: active
+symptoms:
+  - "erro adq"
+  - "erro idl"
+  - "erro s"
+  - "codigo de erro"
+  - "erro nfc"
+  - "maquininha deu erro"
+  - "mensagem de erro na tela"
+  - "venda nao conclui"
+  - "maquininha travou"
+prerequisites:
+  - Mensagem do cliente recebida (user_id e sessao ja validados pelo canal).
+authorized_tools:
+  - search_knowledge
+  - search_web_pages
+skills:
+  - skill_erros_da_maquininha
+steps:
+  - step_id: entender_duvida
+    instruction: >-
+      Descubra o CODIGO exato que aparece na tela (ex.: ADQ 1-87, IDL 1-08, S-2074) ou se e falha de
+      aproximacao (NFC). Se o cliente nao informou o codigo, peca que leia o que aparece na tela antes
+      de orientar.
+    on_success: consultar_base
+    on_failure: pedir_esclarecimento
+  - step_id: pedir_esclarecimento
+    instruction: >-
+      Faca UMA pergunta objetiva para obter o dado que falta e aguarde a resposta do cliente.
+    on_success: consultar_base
+    on_failure: escalar
+  - step_id: consultar_base
+    tool: search_knowledge
+    instruction: >-
+      Verifique se a base de conhecimento (busca vetorial) ja tem conteudo que responda. Se tiver,
+      responda so com a base e NAO acesse a web.
+    on_success: responder
+    on_failure: consultar_web
+  - step_id: consultar_web
+    tool: search_web_pages
+    instruction: >-
+      A base nao responde: consulte as fontes web do assunto e salve na base so os trechos relevantes.
+      Cada codigo tem sua propria pagina na Central de Ajuda ('Erro ADQ 4-83', 'Erro IDL 1-08', 'Erro
+      na leitora NFC'...).
+    on_success: responder
+    on_failure: escalar
+  - step_id: responder
+    instruction: >-
+      Siga o passo a passo da pagina do codigo exato, na ordem, sem pular teclas de funcao, e termine
+      sugerindo uma venda teste. Nunca misture passos de codigos diferentes. Diga quando o erro
+      ocorre, se a fonte informar.
+    on_success: confirmar_resolucao
+    on_failure: escalar
+  - step_id: confirmar_resolucao
+    instruction: >-
+      Pergunte se a duvida foi resolvida. Se nao, reformule a explicacao uma vez e, persistindo,
+      escale.
+    on_success: closed
+    on_failure: escalar
+  - step_id: escalar
+    instruction: >-
+      Diga com transparencia o que nao foi encontrado e oriente o cliente a procurar a central de
+      atendimento da Getnet. Nao use siglas internas na conversa.
+    on_success: closed
+    on_failure: closed
+decision_points:
+  - question: A base de conhecimento responde a duvida deste assunto?
+    if_yes: responder so com a base (nao acessar a web)
+    if_no: consultar as fontes web do assunto e salvar so o relevante na base
+  - question: Falta algum dado do cliente para responder com precisao?
+    if_yes: fazer UMA pergunta objetiva
+    if_no: responder com o que a fonte traz
+exceptions:
+  - "Se o codigo pedido nao tem pagina em nenhuma fonte, nao suponha o significado: diga que nao encontrou e oriente a central de atendimento."
+  - "Passos que pedem a Senha do Tecnico ou do Operador: oriente a usar a senha do perfil, sem pedir nem repetir a senha."
+escalation_rules:
+  - "O passo a passo foi feito e o erro persiste, ou o codigo nao tem orientacao nas fontes."
+success_criteria:
+  - "A venda teste foi concluida sem erro ou o cliente foi encaminhado com o codigo do erro em maos."
+closure_criteria:
+  - O cliente confirmou que a duvida foi resolvida ou foi orientado a procurar a central de atendimento.

@@ -1,0 +1,23 @@
+# Skill topica do Knowledge Agent: Codigos de erro da maquininha.
+id: skill_erros_da_maquininha
+name: Codigos de erro da maquininha
+description: >-
+  Como responder sobre codigos de erro (ADQ, IDL, S, NFC) usando a pagina do codigo exato.
+owning_agent: knowledge_agent
+always_apply: false
+enabled: true
+keywords:
+  - "erro"
+  - "adq"
+  - "idl"
+  - "nfc"
+  - "codigo de erro"
+allowed_tools: []
+instructions: |-
+  - Confirme o codigo exato que aparece na tela; se nao foi informado, peca que o cliente leia o
+    codigo.
+  - Use so a pagina do codigo pedido e siga os passos na ordem, sem pular teclas de funcao; nunca
+    misture codigos.
+  - Termine sugerindo uma venda teste e, se o erro persistir, oriente a manutencao ou a central de
+    atendimento.
+  - Se nenhum trecho cobre o codigo, nao suponha o significado.

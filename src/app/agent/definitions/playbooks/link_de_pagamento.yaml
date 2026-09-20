@@ -1,0 +1,89 @@
+# Playbook do tipo de solicitacao: Link de pagamento.
+# Soma-se ao Playbook geral (pb_atendimento_duvidas_n1): aqui ficam as regras do assunto.
+# Escolhido pelas Keywords do assunto (ou por similaridade). As etapas com `tool` sao
+# executadas pelo pipeline antes da resposta (base primeiro; se nao responde, a web, e o que
+# for relevante fica salvo na base para as proximas perguntas).
+id: pb_link_de_pagamento
+name: Link de pagamento
+objective: >-
+  Explicar o produto Link de Pagamento: o que e, como criar e enviar um link de cobranca e quais
+  formas de pagamento aceita.
+owning_agent: knowledge_agent
+parent: pb_atendimento_duvidas_n1
+when_to_use: >-
+  Use quando a duvida for sobre o produto Link de Pagamento (cobrar por link, WhatsApp, vender
+  online sem site).
+status: active
+symptoms:
+  - "link de pagamento"
+  - "link de cobranca"
+  - "cobrar por link"
+  - "vender pelo whatsapp"
+  - "vender online sem site"
+  - "enviar cobranca"
+prerequisites:
+  - Mensagem do cliente recebida (user_id e sessao ja validados pelo canal).
+authorized_tools:
+  - search_knowledge
+  - search_web_pages
+skills:
+  - skill_link_de_pagamento
+steps:
+  - step_id: entender_duvida
+    instruction: >-
+      Identifique se o cliente quer conhecer o produto, criar um link ou resolver um problema com um
+      link ja criado.
+    on_success: consultar_base
+    on_failure: pedir_esclarecimento
+  - step_id: pedir_esclarecimento
+    instruction: >-
+      Faca UMA pergunta objetiva para obter o dado que falta e aguarde a resposta do cliente.
+    on_success: consultar_base
+    on_failure: escalar
+  - step_id: consultar_base
+    tool: search_knowledge
+    instruction: >-
+      Verifique se a base de conhecimento (busca vetorial) ja tem conteudo que responda. Se tiver,
+      responda so com a base e NAO acesse a web.
+    on_success: responder
+    on_failure: consultar_web
+  - step_id: consultar_web
+    tool: search_web_pages
+    instruction: >-
+      A base nao responde: consulte as fontes web do assunto e salve na base so os trechos relevantes.
+      Costuma responder a pagina do produto Link de Pagamento no site da Getnet.
+    on_success: responder
+    on_failure: escalar
+  - step_id: responder
+    instruction: >-
+      Explique o que e o produto e o passo a passo para criar e compartilhar, com as formas de
+      pagamento que a fonte listar. Nao prometa taxas, prazos ou limites que a fonte nao traga.
+    on_success: confirmar_resolucao
+    on_failure: escalar
+  - step_id: confirmar_resolucao
+    instruction: >-
+      Pergunte se a duvida foi resolvida. Se nao, reformule a explicacao uma vez e, persistindo,
+      escale.
+    on_success: closed
+    on_failure: escalar
+  - step_id: escalar
+    instruction: >-
+      Diga com transparencia o que nao foi encontrado e oriente o cliente a procurar a central de
+      atendimento da Getnet. Nao use siglas internas na conversa.
+    on_success: closed
+    on_failure: closed
+decision_points:
+  - question: A base de conhecimento responde a duvida deste assunto?
+    if_yes: responder so com a base (nao acessar a web)
+    if_no: consultar as fontes web do assunto e salvar so o relevante na base
+  - question: Falta algum dado do cliente para responder com precisao?
+    if_yes: fazer UMA pergunta objetiva
+    if_no: responder com o que a fonte traz
+exceptions:
+  - "Nao confirme disponibilidade para o perfil do cliente se a fonte nao disser: peca para verificar no portal."
+escalation_rules:
+  - "O cliente relata cobranca de um link que nao foi creditada."
+success_criteria:
+  - "O cliente entendeu o produto e sabe criar o link."
+closure_criteria:
+  - O cliente confirmou que a duvida foi resolvida ou foi orientado a procurar a central de atendimento.

@@ -1,0 +1,79 @@
+[project]
+name = "getnet-multiagent-support"
+version = "0.1.0"
+description = "Plataforma multiagente de atendimento inteligente da Getnet"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "langgraph>=0.2",
+    "langchain>=0.3",
+    "langchain-openai>=0.2",
+    "motor>=3.5",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "structlog>=24.4",
+    "tenacity>=9.0",
+    "pybreaker>=1.2",
+    "slowapi>=0.1",
+    "apscheduler>=3.10",
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.27",
+    "opentelemetry-exporter-prometheus>=0.48b0",
+    "opentelemetry-instrumentation-fastapi>=0.48b0",
+]
+
+[project.optional-dependencies]
+# Scanner de seguranca opcional: o backend atual (app/security/scanners.py) e heuristico e nao
+# importa o llm-guard; instala-lo puxa torch/transformers (varios GB) -- so sob demanda.
+llm-guard = ["llm-guard>=0.3"]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+    "mongomock-motor>=0.0.29",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# B008: sinalizacao generica de "chamada de funcao em default de argumento" -- e o padrao
+# idiomatico do FastAPI (`Depends(...)` como default), nunca um bug aqui.
+ignore = ["B008"]
+
+[tool.ruff.lint.per-file-ignores]
+# Testes priorizam legibilidade dos cenarios sobre o limite de linha.
+"tests/**/*.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# src layout: o pacote `app` vive em src/app -- necessario para rodar os testes sem instalar
+# o pacote antes (pip install -e . tambem funciona e e o modo recomendado).
+pythonpath = ["src"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["app*"]
+
+# Os prompts versionados (.md) sao dados do pacote: sem isto a imagem Docker (pip install .) nao os
+# inclui e todo agente falha com FileNotFoundError.
+[tool.setuptools.package-data]
+app = ["agent/prompts/**/*.md", "agent/definitions/**/*.yaml"]

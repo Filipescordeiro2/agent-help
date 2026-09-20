@@ -1,0 +1,93 @@
+# Central de Ajuda Getnet - uso, compra, manual, erros e manutencao da maquininha.
+sources:
+  - id: ws_ajuda_vender_na_maquininha
+    name: Get Ajuda - Como fazer uma venda na maquininha
+    url: https://site.getnet.com.br/get-ajuda-maquininha/como-fazer-uma-venda-na-maquininha-getnet/
+    description: >-
+      Passo a passo para realizar uma venda na maquininha Getnet: ligar a maquininha, inserir o valor,
+      escolher a forma de pagamento (debito, credito, voucher ou Pix) e concluir a venda.
+    usage: >-
+      Use quando o cliente perguntar como cobrar ou passar uma venda na maquininha, formas de pagamento
+      e comprovante.
+    topics: [vender, venda, cobrar, passar cartao, debito, credito, parcelado, voucher, comprovante, como usar a maquininha]
+    priority: 42
+    enabled: true
+
+  - id: ws_ajuda_erros_maquininha
+    name: Get Ajuda - Erros na maquininha
+    url: https://site.getnet.com.br/get-ajuda-erros-maquininha/
+    description: >-
+      Pagina de suporte sobre erros da maquininha, com videos de dicas e informacoes, link para o
+      Aplicativo Getnet Brasil e para os manuais dos modelos. Traz pouco texto, pois o conteudo
+      principal e em video.
+    usage: >-
+      Use quando o cliente relatar erro, travamento, falha ou mensagem de erro na maquininha; combine
+      com o manual e com a manutencao.
+    topics: [erro, erros, maquininha com erro, falha, travou, nao liga, mensagem de erro, problema, suporte tecnico]
+    priority: 42
+    enabled: true
+
+  - id: ws_ajuda_maquininha_adicional
+    name: Get Ajuda - Como pedir uma maquininha adicional
+    url: https://site.getnet.com.br/get-ajuda-maquininha/como-pedir-uma-maquininha-adicional/
+    description: >-
+      Como pedir maquininhas adicionais pelo Portal (menu Financeiro ou Produtos e servicos). Ativacao e
+      desativacao exigem perfil administrativo e senha.
+    usage: >-
+      Use para solicitar mais de uma maquininha, uma nova maquininha, ativar ou desativar equipamentos.
+    topics: [maquininha adicional, mais maquininhas, segunda maquininha, pedir maquininha, novo equipamento, ativar, desativar, portal, perfil administrativo]
+    priority: 42
+    enabled: true
+
+  - id: ws_ajuda_produtos_e_servicos
+    name: Get Ajuda - Adquirindo nossos produtos e servicos (escolha sua maquininha)
+    url: https://site.getnet.com.br/get-ajuda-maquininha/adquirindo-nossos-produtos-e-servicos/
+    description: >-
+      Pagina comercial para escolher e adquirir a maquininha: taxas exclusivas para o CNPJ, aceite de
+      cartoes em moedas estrangeiras, recebimento por Pix, conta e cartao gratis, recebimento em 2 dias
+      uteis, frete gratis e comparativo de maquininhas.
+    usage: >-
+      Use para clientes que querem comprar ou contratar uma maquininha, conhecer modelos e condicoes
+      comerciais e receber em 2 dias uteis.
+    topics: [comprar maquininha, contratar, adquirir, modelos, escolher maquininha, conta gratis, cartao gratis, frete gratis, recebimento em 2 dias, moedas estrangeiras, get conta, oferta]
+    priority: 42
+    enabled: true
+
+  - id: ws_ajuda_get_smart
+    name: Get Ajuda - Solucoes Get Smart
+    url: https://site.getnet.com.br/get-ajuda-maquininha/solucoes-get-smart/
+    description: >-
+      Explica a Get Smart: modo quiosque (autoatendimento com apenas um aplicativo aberto,
+      configuracoes protegidas por senha e tela sempre ligada), escolha da automacao e o aplicativo
+      Configurar.
+    usage: >-
+      Use para duvidas sobre Get Smart, modo quiosque, totem de autoatendimento e automacoes.
+    topics: [get smart, modo quiosque, autoatendimento, totem, automacao, aplicativo configurar, terminal]
+    priority: 42
+    enabled: true
+
+  - id: ws_ajuda_manual_maquininha
+    name: Get Ajuda - Como acessar o manual da maquininha
+    url: https://site.getnet.com.br/get-ajuda-maquininha/como-acessa-o-manual-da-sua-maquininha-getnet/
+    description: >-
+      Todos os manuais das maquininhas Getnet sao digitais. Indica onde acessar o manual do modelo (lista
+      de manuais navegaveis em site.getnet.com.br/boas-vindas/manual-maquinas/) e pela pagina do Get
+      Ajuda.
+    usage: >-
+      Use quando o cliente pedir manual, guia de uso ou instrucoes de um modelo de maquininha.
+    topics: [manual, manual da maquininha, guia, instrucoes, modelo, como usar, pdf]
+    priority: 42
+    enabled: true
+
+  - id: ws_ajuda_manutencao_maquininha
+    name: Get Ajuda - Como solicitar a manutencao da maquininha
+    url: https://site.getnet.com.br/get-ajuda-maquininha/como-solicitar-a-manutencao-da-maquininha-getnet/
+    description: >-
+      Como solicitar manutencao da maquininha pelo Aplicativo Getnet Brasil (opcao Manutencao de maquina
+      na home ou em Servicos, escolher a maquina e o motivo, ou iniciar chat de suporte por WhatsApp) e
+      pelo computador.
+    usage: >-
+      Use para maquininha com defeito, reparo, troca, manutencao e suporte tecnico do equipamento.
+    topics: [manutencao, defeito, quebrou, reparo, troca de maquininha, maquininha com problema, assistencia tecnica, suporte, chamado, aplicativo]
+    priority: 42
+    enabled: true

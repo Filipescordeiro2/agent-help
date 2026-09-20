@@ -1,0 +1,94 @@
+# Playbook do tipo de solicitacao: Pix na maquininha e no aplicativo.
+# Soma-se ao Playbook geral (pb_atendimento_duvidas_n1): aqui ficam as regras do assunto.
+# Escolhido pelas Keywords do assunto (ou por similaridade). As etapas com `tool` sao
+# executadas pelo pipeline antes da resposta (base primeiro; se nao responde, a web, e o que
+# for relevante fica salvo na base para as proximas perguntas).
+id: pb_pix
+name: Pix na maquininha e no aplicativo
+objective: >-
+  Orientar o cliente a habilitar o Pix, vender com Pix na maquininha e usar o Pix por biometria,
+  pelo portal, pelo aplicativo ou pelo Get Tap.
+owning_agent: knowledge_agent
+parent: pb_atendimento_duvidas_n1
+when_to_use: >-
+  Use quando a duvida envolver Pix: habilitar, vender com Pix na maquininha, Pix por biometria,
+  portal, aplicativo ou Get Tap.
+status: active
+symptoms:
+  - "habilitar pix"
+  - "vender com pix"
+  - "pix na maquininha"
+  - "pix por biometria"
+  - "qr code pix"
+  - "receber por pix"
+  - "pix no get tap"
+  - "pix no aplicativo"
+prerequisites:
+  - Mensagem do cliente recebida (user_id e sessao ja validados pelo canal).
+authorized_tools:
+  - search_knowledge
+  - search_web_pages
+skills:
+  - skill_pix
+steps:
+  - step_id: entender_duvida
+    instruction: >-
+      Identifique se o cliente quer HABILITAR o Pix ou VENDER com Pix, e por qual canal (portal,
+      aplicativo Getnet Brasil, maquininha ou Get Tap). Se nao disse, NAO pergunte antes: apresente
+      TODOS os canais que a fonte traz (resumo curto de cada) e, so no fim, ofereca detalhar o que o
+      cliente usa.
+    on_success: consultar_base
+    on_failure: pedir_esclarecimento
+  - step_id: pedir_esclarecimento
+    instruction: >-
+      Faca UMA pergunta objetiva para obter o dado que falta e aguarde a resposta do cliente.
+    on_success: consultar_base
+    on_failure: escalar
+  - step_id: consultar_base
+    tool: search_knowledge
+    instruction: >-
+      Verifique se a base de conhecimento (busca vetorial) ja tem conteudo que responda. Se tiver,
+      responda so com a base e NAO acesse a web.
+    on_success: responder
+    on_failure: consultar_web
+  - step_id: consultar_web
+    tool: search_web_pages
+    instruction: >-
+      A base nao responde: consulte as fontes web do assunto e salve na base so os trechos relevantes.
+      Costumam responder as paginas de Pix da Central de Ajuda (portal, aplicativo, venda na
+      maquininha, biometria e Get Tap).
+    on_success: responder
+    on_failure: escalar
+  - step_id: responder
+    instruction: >-
+      Explique os pre-requisitos primeiro (ex.: perfil administrativo e senha para habilitar) e depois
+      o passo a passo do canal pedido. Se ha mais de um canal, resuma cada um em poucas linhas.
+    on_success: confirmar_resolucao
+    on_failure: escalar
+  - step_id: confirmar_resolucao
+    instruction: >-
+      Pergunte se a duvida foi resolvida. Se nao, reformule a explicacao uma vez e, persistindo,
+      escale.
+    on_success: closed
+    on_failure: escalar
+  - step_id: escalar
+    instruction: >-
+      Diga com transparencia o que nao foi encontrado e oriente o cliente a procurar a central de
+      atendimento da Getnet. Nao use siglas internas na conversa.
+    on_success: closed
+    on_failure: closed
+decision_points:
+  - question: A base de conhecimento responde a duvida deste assunto?
+    if_yes: responder so com a base (nao acessar a web)
+    if_no: consultar as fontes web do assunto e salvar so o relevante na base
+  - question: Falta algum dado do cliente para responder com precisao?
+    if_yes: fazer UMA pergunta objetiva
+    if_no: responder com o que a fonte traz
+exceptions:
+  - "Nao explique como cadastrar uma chave Pix pessoal em banco: isso nao e responsabilidade da Getnet."
+escalation_rules:
+  - "A habilitacao foi feita como descrito e continua indisponivel (pode haver pendencia cadastral)."
+success_criteria:
+  - "O cliente sabe o passo a passo do canal que precisa."
+closure_criteria:
+  - O cliente confirmou que a duvida foi resolvida ou foi orientado a procurar a central de atendimento.

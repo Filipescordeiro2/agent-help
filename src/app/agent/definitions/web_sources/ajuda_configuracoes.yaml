@@ -1,0 +1,40 @@
+# Central de Ajuda Getnet - configuracoes e consulta de vendas.
+sources:
+  - id: ws_ajuda_configurar_wifi
+    name: Get Ajuda - Como configurar o Wi-Fi na maquininha
+    url: https://site.getnet.com.br/get-ajuda-configuracoes/como-configurar-o-wi-fi-na-sua-maquininha-getnet/
+    description: >-
+      Passo a passo para conectar a maquininha Getnet ao Wi-Fi: abrir a opcao Wi-Fi na tela inicial,
+      escolher a rede e informar a senha.
+    usage: >-
+      Use para conexao da maquininha com a internet via Wi-Fi, rede, senha do Wi-Fi e maquininha offline
+      ou sem conexao.
+    topics: [wifi, wi-fi, conectar, internet, rede, senha do wifi, offline, sem conexao, nao conecta, conexao]
+    priority: 44
+    enabled: true
+
+  - id: ws_ajuda_consultar_vendas
+    name: Get Ajuda - Como consultar minhas vendas
+    url: https://site.getnet.com.br/get-ajuda-configuracoes/como-consultar-minhas-vendas/
+    description: >-
+      Como consultar e gerir as vendas pelo Aplicativo Getnet Brasil (opcao Extrato) e pelo Portal do
+      Cliente (area Financeiro: historico de vendas, recebimentos e negociacao).
+    usage: >-
+      Use para ver extrato, historico de vendas, recebimentos e conciliar vendas.
+    topics: [consultar vendas, extrato, historico de vendas, recebimentos, financeiro, portal, aplicativo, relatorio, conciliacao]
+    priority: 44
+    enabled: true
+
+  - id: ws_ajuda_configuracoes_maquininha
+    name: Get Ajuda - Configuracoes da sua maquininha
+    url: https://site.getnet.com.br/get-ajuda-configuracoes/configuracoes-da-sua-maquininha/
+    description: >-
+      Perguntas frequentes sobre a maquininha: ela ja vem com chip e plano de dados proprio (nao precisa
+      contratar), bandeiras aceitas (pessoa fisica e pessoa juridica, incluindo vouchers Alelo, Pluxee,
+      Ticket e VR) e necessidade de aplicativo.
+    usage: >-
+      Use para duvidas sobre chip, plano de dados, bandeiras aceitas, vouchers e configuracoes basicas
+      da maquininha.
+    topics: [chip, plano de dados, bandeiras, bandeiras aceitas, mastercard, visa, elo, amex, hipercard, voucher, alelo, ticket, vr, pluxee, configuracoes]
+    priority: 44
+    enabled: true

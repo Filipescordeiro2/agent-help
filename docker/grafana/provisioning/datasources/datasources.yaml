@@ -1,0 +1,44 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: getnet-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+
+  - name: Loki
+    uid: getnet-loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      derivedFields:
+        - name: trace_id
+          matcherRegex: '"trace_id": "(\w+)"'
+          url: "$${__value.raw}"
+          datasourceUid: getnet-tempo
+
+  - name: Tempo
+    uid: getnet-tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: getnet-loki
+        filterByTraceID: true
+
+  # Detalhe por usuario (sessoes por usuario) vem do endpoint JSON da API -- nunca como label do
+  # Prometheus (cardinalidade, research.md #6). O token vem do ambiente do container.
+  - name: Getnet API
+    uid: getnet-api
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    jsonData:
+      allowedHosts:
+        - http://app:8000
+      httpHeaderName1: X-Internal-Service-Token
+    secureJsonData:
+      httpHeaderValue1: ${INTERNAL_SERVICE_TOKEN}

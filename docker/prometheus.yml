@@ -1,0 +1,15 @@
+# Prometheus -- raspa /metrics da aplicacao. O endpoint fica sob o mesmo boundary de confianca
+# interna da API (spec FR-038): o token e enviado no cabecalho X-Internal-Service-Token, lido de
+# um arquivo gravado pelo entrypoint do container a partir de INTERNAL_SERVICE_TOKEN.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: getnet-app
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app:8000"]
+    http_headers:
+      X-Internal-Service-Token:
+        files:
+          - /tmp/internal_token

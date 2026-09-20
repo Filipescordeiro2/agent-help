@@ -1,0 +1,20 @@
+# Varredura automatizada de segredos (T138, Constitution §Gestão de Credenciais).
+#
+# Setup (uma vez, após `git init`):
+#   pip install pre-commit detect-secrets
+#   pre-commit install
+#
+# Rodar manualmente sobre todo o repositório:
+#   pre-commit run --all-files
+#
+# Atualizar a baseline depois de revisar novos "achados" como falsos positivos
+# (ex.: placeholders em .env.example):
+#   detect-secrets scan > .secrets.baseline
+
+repos:
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: package.lock.json

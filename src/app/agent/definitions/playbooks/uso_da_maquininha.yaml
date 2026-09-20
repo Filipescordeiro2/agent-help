@@ -1,0 +1,96 @@
+# Playbook do tipo de solicitacao: Uso e configuracao da maquininha.
+# Soma-se ao Playbook geral (pb_atendimento_duvidas_n1): aqui ficam as regras do assunto.
+# Escolhido pelas Keywords do assunto (ou por similaridade). As etapas com `tool` sao
+# executadas pelo pipeline antes da resposta (base primeiro; se nao responde, a web, e o que
+# for relevante fica salvo na base para as proximas perguntas).
+id: pb_uso_da_maquininha
+name: Uso e configuracao da maquininha
+objective: >-
+  Ajudar o cliente a usar a maquininha: vender, conectar ao Wi-Fi, consultar vendas, configurar,
+  pedir maquininha adicional, consultar manual e solicitar manutencao.
+owning_agent: knowledge_agent
+parent: pb_atendimento_duvidas_n1
+when_to_use: >-
+  Use quando o cliente quiser aprender a usar ou configurar a maquininha: vender, Wi-Fi, consultar
+  vendas, maquininha adicional, manual ou manutencao (sem um codigo de erro na tela).
+status: active
+symptoms:
+  - "como vender"
+  - "passar cartao"
+  - "conectar wifi"
+  - "consultar vendas"
+  - "configurar maquininha"
+  - "maquininha adicional"
+  - "manual da maquininha"
+  - "manutencao da maquininha"
+  - "get smart"
+  - "simulador"
+prerequisites:
+  - Mensagem do cliente recebida (user_id e sessao ja validados pelo canal).
+authorized_tools:
+  - search_knowledge
+  - search_web_pages
+skills:
+  - skill_uso_da_maquininha
+steps:
+  - step_id: entender_duvida
+    instruction: >-
+      Identifique a tarefa (vender, conectar, consultar vendas, configurar, pedir outra maquininha,
+      manutencao) e, se importar, o modelo da maquininha (Get Smart, Get Tap, etc.). Se o passo a
+      passo muda por modelo e o cliente nao disse, NAO pergunte antes: responda com o que a fonte traz
+      para todos os modelos e so no fim ofereca detalhar o modelo dele.
+    on_success: consultar_base
+    on_failure: pedir_esclarecimento
+  - step_id: pedir_esclarecimento
+    instruction: >-
+      Faca UMA pergunta objetiva para obter o dado que falta e aguarde a resposta do cliente.
+    on_success: consultar_base
+    on_failure: escalar
+  - step_id: consultar_base
+    tool: search_knowledge
+    instruction: >-
+      Verifique se a base de conhecimento (busca vetorial) ja tem conteudo que responda. Se tiver,
+      responda so com a base e NAO acesse a web.
+    on_success: responder
+    on_failure: consultar_web
+  - step_id: consultar_web
+    tool: search_web_pages
+    instruction: >-
+      A base nao responde: consulte as fontes web do assunto e salve na base so os trechos relevantes.
+      Costumam responder as paginas 'Como fazer uma venda na maquininha', 'Configuracoes' (Wi-Fi,
+      consultar vendas) e 'Manual' da Central de Ajuda.
+    on_success: responder
+    on_failure: escalar
+  - step_id: responder
+    instruction: >-
+      De o passo a passo numerado, usando os nomes de menus e teclas exatamente como a fonte. Se a
+      fonte separa por modelo, responda so o modelo do cliente ou pergunte.
+    on_success: confirmar_resolucao
+    on_failure: escalar
+  - step_id: confirmar_resolucao
+    instruction: >-
+      Pergunte se a duvida foi resolvida. Se nao, reformule a explicacao uma vez e, persistindo,
+      escale.
+    on_success: closed
+    on_failure: escalar
+  - step_id: escalar
+    instruction: >-
+      Diga com transparencia o que nao foi encontrado e oriente o cliente a procurar a central de
+      atendimento da Getnet. Nao use siglas internas na conversa.
+    on_success: closed
+    on_failure: closed
+decision_points:
+  - question: A base de conhecimento responde a duvida deste assunto?
+    if_yes: responder so com a base (nao acessar a web)
+    if_no: consultar as fontes web do assunto e salvar so o relevante na base
+  - question: Falta algum dado do cliente para responder com precisao?
+    if_yes: fazer UMA pergunta objetiva
+    if_no: responder com o que a fonte traz
+exceptions:
+  - "Nao invente nomes de menu ou teclas que a fonte nao cite."
+escalation_rules:
+  - "O cliente descreve defeito fisico ou falha que o passo a passo nao resolve e a fonte manda acionar a manutencao."
+success_criteria:
+  - "O cliente concluiu a tarefa ou sabe qual e o proximo passo."
+closure_criteria:
+  - O cliente confirmou que a duvida foi resolvida ou foi orientado a procurar a central de atendimento.

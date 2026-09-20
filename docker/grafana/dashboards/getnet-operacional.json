@@ -1,0 +1,320 @@
+{
+  "uid": "getnet-operacional",
+  "title": "Getnet — Visão Operacional",
+  "tags": [
+    "getnet",
+    "multiagent"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "TPM - tokens por minuto",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "getnet-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "sum(rate(getnet_llm_tokens_total[1m])) * 60",
+          "legendFormat": "tokens/min",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "RPM - requisicoes por minuto",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "getnet-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "sum(rate(getnet_http_requests_total[1m])) * 60",
+          "legendFormat": "req/min",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Latencia por agente (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "getnet-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le, agent) (rate(getnet_agent_call_duration_seconds_bucket[5m])))",
+          "legendFormat": "p50 {{agent}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, agent) (rate(getnet_agent_call_duration_seconds_bucket[5m])))",
+          "legendFormat": "p95 {{agent}}",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "histogram_quantile(0.99, sum by (le, agent) (rate(getnet_agent_call_duration_seconds_bucket[5m])))",
+          "legendFormat": "p99 {{agent}}",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "title": "Latencia HTTP por endpoint (p95)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "getnet-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, endpoint) (rate(getnet_http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p95 {{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "title": "Distribuicao do grounding score",
+      "type": "barchart",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "getnet-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "sum by (le) (increase(getnet_grounding_score_bucket[1h]))",
+          "legendFormat": "{{le}}",
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Sessoes ativas por usuario",
+      "type": "table",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "getnet-api"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "getnet-api"
+          },
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "url": "http://app:8000/api/v1/metrics/sessions-per-user",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "user_id",
+              "text": "user_id",
+              "type": "string"
+            },
+            {
+              "selector": "active_session_count",
+              "text": "active_session_count",
+              "type": "number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Propostas do Feedback Agent por status",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "getnet-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "sum by (status) (getnet_feedback_proposals_total)",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Taxa de aprovacao de propostas",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "getnet-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "sum(getnet_feedback_proposals_total{status=\"APPROVED\"}) / clamp_min(sum(getnet_feedback_proposals_total{status=~\"APPROVED|REJECTED\"}), 1)",
+          "legendFormat": "aprovacao",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "title": "Taxa de erro por agente / ferramenta",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 18,
+        "y": 24,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "getnet-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "sum by (agent) (rate(getnet_agent_errors_total[5m]))",
+          "legendFormat": "agente {{agent}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "getnet-prometheus"
+          },
+          "expr": "sum by (tool) (rate(getnet_tool_errors_total[5m]))",
+          "legendFormat": "ferramenta {{tool}}",
+          "refId": "B"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+# Central de Ajuda Getnet - cadastro, acesso ao aplicativo e domicilio bancario.
+sources:
+  - id: ws_ajuda_domicilio_bancario
+    name: Get Ajuda - Como trocar o domicilio bancario
+    url: https://site.getnet.com.br/get-ajuda-cadastro/como-trocar-o-domicilio-bancario/
+    description: >-
+      Como conferir e trocar o domicilio bancario (a conta que recebe as vendas) pelo Aplicativo Getnet
+      Brasil e pelo Portal, mantendo os dados bancarios atualizados para a liquidacao no prazo.
+    usage: >-
+      Use para mudar a conta bancaria de recebimento, atualizar dados bancarios e receber em outra conta.
+    topics: [domicilio bancario, conta bancaria, dados bancarios, trocar conta, banco, agencia, receber em outra conta, liquidacao]
+    priority: 45
+    enabled: true
+
+  - id: ws_ajuda_atualizar_cadastro
+    name: Get Ajuda - Como atualizar seus dados cadastrais no aplicativo
+    url: https://site.getnet.com.br/get-ajuda-cadastro/como-atualizar-seus-dados-cadastrais-no-aplicativo-getnet-brasil/
+    description: >-
+      Passo a passo para atualizar os dados cadastrais no aplicativo Getnet Brasil, mantendo a conta
+      segura e funcional.
+    usage: >-
+      Use para alterar endereco, telefone, e-mail e demais dados cadastrais.
+    topics: [atualizar cadastro, dados cadastrais, alterar dados, endereco, telefone, email, cadastro, aplicativo]
+    priority: 45
+    enabled: true
+
+  - id: ws_ajuda_finalizar_cadastro
+    name: Get Ajuda - Como finalizar seu cadastro no aplicativo e comecar a aceitar pagamentos
+    url: https://site.getnet.com.br/get-ajuda-cadastro/como-finalizar-seu-cadastro-no-aplicativo-getnet-brasil-e-comecar-a-aceitar-pagamentos/
+    description: >-
+      Como finalizar o cadastro pelo aplicativo Getnet Brasil depois de escolher a solucao no site
+      (login com CPF, e-mail e senha) e comecar a aceitar pagamentos.
+    usage: >-
+      Use para novo cliente que contratou e precisa concluir o cadastro, ativar a conta e comecar a
+      vender.
+    topics: [finalizar cadastro, concluir cadastro, ativar conta, primeiro acesso, comecar a vender, aceitar pagamentos, novo cliente, aplicativo, cpf]
+    priority: 45
+    enabled: true
+
+  - id: ws_ajuda_redefinir_senha
+    name: Get Ajuda - Como redefinir a senha do aplicativo Getnet Brasil
+    url: https://site.getnet.com.br/get-ajuda-cadastro/como-redefinir-a-senha-aplicativo/
+    description: >-
+      Como redefinir a senha de acesso do aplicativo Getnet Brasil pela opcao Esqueci a senha.
+    usage: >-
+      Use para cliente que esqueceu a senha, nao consegue entrar no aplicativo ou precisa recuperar o
+      acesso.
+    topics: [senha, esqueci a senha, redefinir senha, recuperar acesso, login, nao consigo entrar, aplicativo, acesso]
+    priority: 45
+    enabled: true
