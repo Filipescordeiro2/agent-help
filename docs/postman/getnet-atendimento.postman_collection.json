@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Getnet Atendimento - sessoes, mensagens, fontes web e auditoria",
-    "description": "Collection de atendimento: saude e docs, sessao e mensagens, fontes web homologadas e auditoria. A chave do OpenRouter NAO vem preenchida: informe-a na variavel `llm_api_key` do ambiente (tipo secret). Importe tambem `getnet-atendimento.postman_environment.json`.",
+    "description": "Collection de atendimento: saude e docs, sessao e mensagens, chamados (tickets), fontes web homologadas e auditoria. A chave do OpenRouter NAO vem preenchida: informe-a na variavel `llm_api_key` do ambiente (tipo secret). Importe tambem `getnet-atendimento.postman_environment.json`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -224,7 +224,8 @@
                   "pm.test('AgentResponse valido', () => { pm.expect(r).to.have.property('status'); pm.expect(r).to.have.property('metadata'); });",
                   "pm.test('grounding_score coerente com o status', () => { if (r.status !== 'OK') pm.expect(r.metadata.grounding_score).to.eql(null); else pm.expect(r.metadata.grounding_score).to.be.within(0, 5); });",
                   "if (r.metadata && r.metadata.execution_id) pm.environment.set('execution_id', r.metadata.execution_id);",
-                  "if (r.sources && r.sources.length) { console.log('fontes:', JSON.stringify(r.sources)); }"
+                  "if (r.sources && r.sources.length) { console.log('fontes:', JSON.stringify(r.sources)); }",
+                  "if (r.metadata && r.metadata.ticket_id) pm.environment.set('ticket_id', r.metadata.ticket_id);"
                 ]
               }
             }
@@ -369,7 +370,85 @@
       ]
     },
     {
-      "name": "03 - Fontes web homologadas",
+      "name": "03 - Chamados (tickets)",
+      "item": [
+        {
+          "name": "Chamados - listar (por cliente)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tickets?user_id={{user_id}}&limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{user_id}}",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Chamados mais recentes primeiro. Filtros: user_id, status (OPEN | IN_PROGRESS | CLOSED), limit."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chamados - obter (pacote completo para o atendente)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tickets/{{ticket_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tickets",
+                "{{ticket_id}}"
+              ]
+            },
+            "description": "Cliente, conversa (mascarada), analise previa da IA (problema, codigo de erro, solucoes tentadas, itens validados) e motivo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Fontes web homologadas",
       "item": [
         {
           "name": "Listar fontes web",
@@ -605,7 +684,7 @@
       ]
     },
     {
-      "name": "04 - Auditoria (fluxo do agente por sessao)",
+      "name": "05 - Auditoria (fluxo do agente por sessao)",
       "item": [
         {
           "name": "Auditoria da sessao (fluxo completo + por que)",

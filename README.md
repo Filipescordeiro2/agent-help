@@ -164,7 +164,7 @@ A primeira pergunta de um assunto costuma demorar **10–25 s** (o agente vai à
 
 1. No Postman, **Import** e selecione `docs/postman/getnet-atendimento.postman_collection.json` e `docs/postman/getnet-atendimento.postman_environment.json`.
 2. Escolha o ambiente **Getnet Atendimento - Local** e preencha `llm_api_key` (aba *Current value*, tipo *secret*: a chave fica só no seu Postman; o arquivo do repositório vai vazio).
-3. Rode as pastas na ordem (`01` → `04`). Os ids (`session_id`, `execution_id`...) são salvos sozinhos nas variáveis. Detalhes no capítulo 10.
+3. Rode as pastas na ordem (`01` → `05`). Os ids (`session_id`, `ticket_id`...) são salvos sozinhos nas variáveis. Detalhes no capítulo 10.
 
 ### 1.9 Rodar sem Docker para o app (desenvolvimento) e testes
 
@@ -445,7 +445,7 @@ Tudo o que foi usado na construção, agrupado pela função que cumpre.
 | **pytest**, **pytest-asyncio** | ~750 testes (unitários, integração, segurança, e2e, avaliação de roteamento) |
 | **mongomock-motor** | Banco simulado nos testes (rápido, sem servidor) |
 | **ruff**, **mypy** | Lint, formatação e tipagem |
-| **Postman** | Collection de atendimento (19 requisições) e ambiente para explorar e validar a API (capítulo 10) |
+| **Postman** | Collection de atendimento (21 requisições) e ambiente para explorar e validar a API (capítulo 10) |
 
 ### Glossário do capítulo 4
 
@@ -469,7 +469,7 @@ A plataforma expõe **quatro visões** complementares. Todas se correlacionam pe
 | **Traces** | OpenTelemetry → Collector → **Tempo** (visto no Grafana) | "Onde o tempo foi gasto nesta requisição?" (cada nó, agente, ferramenta e chamada ao modelo é um *span*) | Grafana → *Explore* → fonte **Tempo** |
 | **Métricas** | OpenTelemetry → **Prometheus** → Grafana | "Quantos tokens, quantas requisições, qual a latência, qual a qualidade?" | `http://localhost:3000` (painel *Getnet — Visão Operacional*) e `http://localhost:9090` |
 | **Logs** | structlog (JSON) → **Promtail** → **Loki** | "O que a aplicação registrou?" (uma linha JSON por evento) | Grafana → *Explore* → fonte **Loki** |
-| **Auditoria de negócio** | API `GET /api/v1/audit/...` (dados no MongoDB) | "Por que o agente respondeu isso?" | Capítulo 6.10 e capítulo 10 (pasta 04) |
+| **Auditoria de negócio** | API `GET /api/v1/audit/...` (dados no MongoDB) | "Por que o agente respondeu isso?" | Capítulo 6.10 e capítulo 10 (pasta 05) |
 
 ### 5.1 Painel do Grafana
 
@@ -1771,14 +1771,14 @@ Arquivos (na pasta [`docs/postman`](docs/postman)):
 
 | Arquivo | Para que serve |
 |---|---|
-| `getnet-atendimento.postman_collection.json` | Collection **de atendimento** (esta seção): saúde e docs, sessão e mensagens, fontes web e auditoria. 19 requisições. |
+| `getnet-atendimento.postman_collection.json` | Collection **de atendimento** (esta seção): saúde e docs, sessão e mensagens, chamados, fontes web e auditoria. 21 requisições. |
 | `getnet-atendimento.postman_environment.json` | Ambiente **Getnet Atendimento - Local** com as variáveis usadas por ela. A chave do OpenRouter **vem vazia**. |
 
 ### 10.1 Configuração e conceitos comuns
 
 1. No Postman: **Import** → selecione a collection e o environment; escolha o ambiente **Getnet Atendimento - Local** (canto superior direito).
 2. Abra o ambiente e preencha, na coluna *Current value*, `llm_api_key` (sua chave do OpenRouter). O valor **fica só no seu Postman** (tipo *secret*); o arquivo do repositório vai vazio e não deve ser alterado com a chave.
-3. Rode as pastas na ordem. Cada requisição tem *tests* que salvam ids (`session_id`, `execution_id`...) nas variáveis, de modo que a próxima já usa o valor certo.
+3. Rode as pastas na ordem. Cada requisição tem *tests* que salvam ids (`session_id`, `ticket_id`...) nas variáveis, de modo que a próxima já usa o valor certo.
 
 **Variáveis do ambiente**
 
@@ -1789,7 +1789,8 @@ Arquivos (na pasta [`docs/postman`](docs/postman)):
 | `llm_api_key` | Chave do OpenRouter; enviada como `X-API-Key-LLM` só nas rotas que usam modelo. |
 | `user_id` | Identificador do cliente nos exemplos (`u-demo`). |
 | `session_id`, `execution_id` | Preenchidos sozinhos ao criar a sessão e ao enviar mensagens. |
-| `web_source_id` | Fonte web criada na pasta 03. |
+| `ticket_id` | Número do chamado; preenchido sozinho quando uma mensagem abre chamado (ou informe o seu). |
+| `web_source_id` | Fonte web criada na pasta 04. |
 
 **Cabeçalhos**
 
@@ -2010,7 +2011,7 @@ curl -X GET "$BASE/openapi.json"
 1. `Criar sessao` (uma vez por conversa) → guarda o `session_id`.
 2. `Enviar mensagem`: troque o texto do body e envie; a conversa continua na mesma sessão.
 3. Leia `status`, `message` e `sources`; se abrir chamado, `metadata.ticket_id` traz o número.
-4. Para entender o porquê, use a pasta 04 (Auditoria). `Fechar sessao` ao terminar.
+4. Para entender o porquê, use a pasta 05 (Auditoria). `Fechar sessao` ao terminar.
 
 **Glossário da pasta**
 
@@ -2336,7 +2337,150 @@ curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/close" 
 |---|---|
 | `status: closed` | Sessão encerrada. |
 
-### 10.4 Pasta 03 — Fontes web homologadas
+### 10.4 Pasta 03 — Chamados (tickets)
+
+**O que é.** Consultar os chamados abertos pelo suporte guiado quando o cliente não resolve o problema.
+
+**Quando usar.** Para o atendente humano ler o pacote completo e para acompanhar o que foi aberto por cliente.
+
+**Por que existe.** O chamado guarda tudo o que o atendente precisa (cliente, conversa, análise prévia da IA, soluções já tentadas, motivo), para ninguém recomeçar do zero.
+
+**Requisições da pasta**
+
+| # | Requisição | O que faz | Por que usar |
+|---|---|---|---|
+| 10.4.1 | `GET /api/v1/tickets` | Lista os chamados (mais recentes primeiro). | Acompanhar o que foi aberto por um cliente. |
+| 10.4.2 | `GET /api/v1/tickets/{ticket_id}` | Devolve o chamado completo. | É o que o atendente humano lê: cliente, conversa mascarada, análise prévia da IA e motivo. |
+
+**Passo a passo da pasta**
+
+1. Converse pela pasta 02 até o agente abrir um chamado (o cliente diz que não resolveu): o número aparece em `metadata.ticket_id` e vai para a variável `ticket_id`.
+2. `Chamados - listar` para ver os chamados do cliente.
+3. `Chamados - obter` para ler o pacote completo.
+
+**Glossário da pasta**
+
+| Termo | Significado |
+|---|---|
+| Chamado (`ticket_id`) | Registro para o atendimento humano; número no formato `TKT-000001`. |
+| `reason` | Motivo: `NOT_RESOLVED`, `NO_SOLUTION_FOUND`, `CUSTOMER_REQUESTED_HUMAN`, `VALIDATION_FAILED`. |
+| `analysis.validated` | Itens conferidos antes de abrir: cliente identificado, problema entendido, conversa registrada, solução indicada ou busca feita. |
+| `analysis.handoff_note` | Resumo pronto para o atendente. |
+
+#### 10.4.1 `GET /api/v1/tickets` — Chamados - listar (por cliente)
+
+**O que faz.** Lista os chamados (mais recentes primeiro).
+
+**Por que usar.** Acompanhar o que foi aberto por um cliente.
+
+**Quando / passo a passo.**
+1. Chame com `user_id`, `status`, `limit`.
+
+**Requisição**
+
+```bash
+curl -X GET "$BASE/api/v1/tickets?user_id=u-demo&limit=20" \
+  -H "X-Internal-Service-Token: $INTERNAL_TOKEN"
+```
+
+**Resposta** — `200 OK` (real, abreviada)
+
+<details><summary>Ver resposta</summary>
+
+```json
+[
+  {
+    "ticket_id": "TKT-000003",
+    "case_id": "4b3e07ff-c08e-432e-a2e4-117e86a38042",
+    "status": "OPEN",
+    "reason": "NOT_RESOLVED",
+    "subject": "maquininha exibindo o erro ADQ 4-83.",
+    "customer": "{...}",
+    "conversation": [
+      "..."
+    ],
+    "analysis": "{...}",
+    "execution_id": "f35d0bfa-f593-43a9-a35f-012c2aaf0ad9",
+    "created_at": "2026-09-20T19:14:36.397330Z"
+  },
+  "... (+2 itens)"
+]
+```
+
+</details>
+
+**Glossário deste endpoint**
+
+| Termo | Significado |
+|---|---|
+| `status` | `OPEN`, `IN_PROGRESS`, `CLOSED`. |
+
+#### 10.4.2 `GET /api/v1/tickets/{ticket_id}` — Chamados - obter (pacote completo para o atendente)
+
+**O que faz.** Devolve o chamado completo.
+
+**Por que usar.** É o que o atendente humano lê: cliente, conversa mascarada, análise prévia da IA e motivo.
+
+**Quando / passo a passo.**
+1. Chame com o número (`TKT-000001`, sem diferenciar maiúsculas).
+
+**Requisição**
+
+```bash
+curl -X GET "$BASE/api/v1/tickets/TKT-000003" \
+  -H "X-Internal-Service-Token: $INTERNAL_TOKEN"
+```
+
+**Resposta** — `200 OK` (real, abreviada)
+
+<details><summary>Ver resposta</summary>
+
+```json
+{
+  "ticket_id": "TKT-000003",
+  "case_id": "4b3e07ff-c08e-432e-a2e4-117e86a38042",
+  "status": "OPEN",
+  "reason": "NOT_RESOLVED",
+  "subject": "maquininha exibindo o erro ADQ 4-83.",
+  "customer": {
+    "user_id": "u-demo",
+    "session_id": "fce70845-9cc5-4abb-9e2d-c1819219666b",
+    "channel": "web"
+  },
+  "conversation": [
+    "{...}",
+    "... (+4 itens)"
+  ],
+  "analysis": {
+    "problem_summary": "maquininha exibindo o erro ADQ 4-83.",
+    "category": "device_error",
+    "error_code": "ADQ 4-83",
+    "clarifications_asked": 1,
+    "solutions_tried": [
+      "..."
+    ],
+    "reason": "NOT_RESOLVED",
+    "handoff_note": "Motivo: o cliente informou que a solucao indicada nao resolveu. Problema entendido: maquin…",
+    "validated": [
+      "..."
+    ]
+  },
+  "execution_id": "f35d0bfa-f593-43a9-a35f-012c2aaf0ad9",
+  "created_at": "2026-09-20T19:14:36.397330Z"
+}
+```
+
+</details>
+
+**Glossário deste endpoint**
+
+| Termo | Significado |
+|---|---|
+| `conversation` | O que foi dito (cliente e assistente), mascarado. |
+| `analysis.solutions_tried` | Soluções já indicadas ao cliente, com as páginas de origem. |
+| `analysis.validated` | O que foi conferido antes de abrir. |
+
+### 10.5 Pasta 04 — Fontes web homologadas
 
 **O que é.** Cadastrar, listar, testar, ligar/desligar as páginas que o agente pode consultar.
 
@@ -2348,12 +2492,12 @@ curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/close" 
 
 | # | Requisição | O que faz | Por que usar |
 |---|---|---|---|
-| 10.4.1 | `GET /api/v1/web-sources` | Lista todas as fontes (51 de fábrica). | Ver onde o agente pode procurar. |
-| 10.4.2 | `POST /api/v1/web-sources` | Cadastra um novo site/página. | Ampliar o conhecimento do agente sem redeploy. |
-| 10.4.3 | `GET /api/v1/web-sources/{web_source_id}` | Detalha uma fonte. | Conferir descrição e estatísticas. |
-| 10.4.4 | `PUT /api/v1/web-sources/{web_source_id}` | Altera uma fonte (inclusive `enabled`). | Desligar uma fonte ruim sem apagá-la. |
-| 10.4.5 | `POST /api/v1/web-sources/{web_source_id}/test` | Acessa a página e mostra o que o agente leria. | Validar a fonte antes de usar. |
-| 10.4.6 | `DELETE /api/v1/web-sources/{web_source_id}` | Remove a fonte web. | Limpar o ambiente após os testes. |
+| 10.5.1 | `GET /api/v1/web-sources` | Lista todas as fontes (51 de fábrica). | Ver onde o agente pode procurar. |
+| 10.5.2 | `POST /api/v1/web-sources` | Cadastra um novo site/página. | Ampliar o conhecimento do agente sem redeploy. |
+| 10.5.3 | `GET /api/v1/web-sources/{web_source_id}` | Detalha uma fonte. | Conferir descrição e estatísticas. |
+| 10.5.4 | `PUT /api/v1/web-sources/{web_source_id}` | Altera uma fonte (inclusive `enabled`). | Desligar uma fonte ruim sem apagá-la. |
+| 10.5.5 | `POST /api/v1/web-sources/{web_source_id}/test` | Acessa a página e mostra o que o agente leria. | Validar a fonte antes de usar. |
+| 10.5.6 | `DELETE /api/v1/web-sources/{web_source_id}` | Remove a fonte web. | Limpar o ambiente após os testes. |
 
 **Passo a passo da pasta**
 
@@ -2373,7 +2517,7 @@ curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/close" 
 | `consulted_count` / `useful_count` | Estatísticas de uso: quantas vezes foi consultada e quantas trouxe trechos úteis. |
 | SSRF | Ataque em que o servidor é induzido a acessar endereços internos; a API só aceita hosts públicos (portas 80/443). |
 
-#### 10.4.1 `GET /api/v1/web-sources` — Listar fontes web
+#### 10.5.1 `GET /api/v1/web-sources` — Listar fontes web
 
 **O que faz.** Lista todas as fontes (51 de fábrica).
 
@@ -2435,7 +2579,7 @@ curl -X GET "$BASE/api/v1/web-sources" \
 | `enabled` | Se o agente pode usá-la. |
 | `consulted_count` / `useful_count` | Uso e utilidade. |
 
-#### 10.4.2 `POST /api/v1/web-sources` — Cadastrar fonte web
+#### 10.5.2 `POST /api/v1/web-sources` — Cadastrar fonte web
 
 **O que faz.** Cadastra um novo site/página.
 
@@ -2495,7 +2639,7 @@ curl -X POST "$BASE/api/v1/web-sources" \
 | `consulted_count` / `useful_count` | Uso e utilidade. |
 | `409` | A URL já está cadastrada. |
 
-#### 10.4.3 `GET /api/v1/web-sources/{web_source_id}` — Obter fonte web
+#### 10.5.3 `GET /api/v1/web-sources/{web_source_id}` — Obter fonte web
 
 **O que faz.** Detalha uma fonte.
 
@@ -2551,7 +2695,7 @@ curl -X GET "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0" \
 | `enabled` | Se o agente pode usá-la. |
 | `consulted_count` / `useful_count` | Uso e utilidade. |
 
-#### 10.4.4 `PUT /api/v1/web-sources/{web_source_id}` — Atualizar / habilitar-desabilitar fonte
+#### 10.5.4 `PUT /api/v1/web-sources/{web_source_id}` — Atualizar / habilitar-desabilitar fonte
 
 **O que faz.** Altera uma fonte (inclusive `enabled`).
 
@@ -2609,7 +2753,7 @@ curl -X PUT "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0" \
 | `enabled` | Se o agente pode usá-la. |
 | `consulted_count` / `useful_count` | Uso e utilidade. |
 
-#### 10.4.5 `POST /api/v1/web-sources/{web_source_id}/test` — Testar fonte web (o que o agente leria)
+#### 10.5.5 `POST /api/v1/web-sources/{web_source_id}/test` — Testar fonte web (o que o agente leria)
 
 **O que faz.** Acessa a página e mostra o que o agente leria.
 
@@ -2651,7 +2795,7 @@ curl -X POST "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0/test
 | `links_found` | Links do mesmo site encontrados. |
 | `preview` | Início do texto. |
 
-#### 10.4.6 `DELETE /api/v1/web-sources/{web_source_id}` — Remover fonte web
+#### 10.5.6 `DELETE /api/v1/web-sources/{web_source_id}` — Remover fonte web
 
 **O que faz.** Remove a fonte web.
 
@@ -2681,7 +2825,7 @@ curl -X DELETE "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0" \
 |---|---|
 | `status: OK` | Removido. |
 
-### 10.5 Pasta 04 — Auditoria (fluxo do agente por sessão)
+### 10.6 Pasta 05 — Auditoria (fluxo do agente por sessão)
 
 **O que é.** Explicar, em português, por que o agente respondeu o que respondeu: rota, base × web, skills/playbooks, grounding, chamado.
 
@@ -2693,10 +2837,10 @@ curl -X DELETE "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0" \
 
 | # | Requisição | O que faz | Por que usar |
 |---|---|---|---|
-| 10.5.1 | `GET /api/v1/audit/sessions/{session_id}` | Devolve todos os turnos da sessão com explicação, linha do tempo e resumo. | Entender por que o agente respondeu ou fez algo. |
-| 10.5.2 | `GET /api/v1/audit/sessions/{session_id}` | Igual à anterior, sem os prompts/saídas do modelo (`include_llm=false`). | Resposta menor quando só interessa o fluxo. |
-| 10.5.3 | `GET /api/v1/audit/executions/{execution_id}` | Auditoria de uma mensagem específica. | Ir direto ao turno problemático. |
-| 10.5.4 | `GET /api/v1/audit/sessions/{session_id}/events` | Lista os eventos brutos, com filtro por tipo. | Filtrar, p.ex., só as chamadas de ferramenta. |
+| 10.6.1 | `GET /api/v1/audit/sessions/{session_id}` | Devolve todos os turnos da sessão com explicação, linha do tempo e resumo. | Entender por que o agente respondeu ou fez algo. |
+| 10.6.2 | `GET /api/v1/audit/sessions/{session_id}` | Igual à anterior, sem os prompts/saídas do modelo (`include_llm=false`). | Resposta menor quando só interessa o fluxo. |
+| 10.6.3 | `GET /api/v1/audit/executions/{execution_id}` | Auditoria de uma mensagem específica. | Ir direto ao turno problemático. |
+| 10.6.4 | `GET /api/v1/audit/sessions/{session_id}/events` | Lista os eventos brutos, com filtro por tipo. | Filtrar, p.ex., só as chamadas de ferramenta. |
 
 **Passo a passo da pasta**
 
@@ -2715,7 +2859,7 @@ curl -X DELETE "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0" \
 | `summary` | Resumo do turno: rota escolhida, agentes, ferramentas, chamadas e tokens do modelo. |
 | Mascaramento | Substituição de dados sensíveis (ex.: `[CARTAO]`) antes de gravar/mostrar. |
 
-#### 10.5.1 `GET /api/v1/audit/sessions/{session_id}` — Auditoria da sessao (fluxo completo + por que)
+#### 10.6.1 `GET /api/v1/audit/sessions/{session_id}` — Auditoria da sessao (fluxo completo + por que)
 
 **O que faz.** Devolve todos os turnos da sessão com explicação, linha do tempo e resumo.
 
@@ -2906,7 +3050,7 @@ curl -X GET "$BASE/api/v1/audit/sessions/9a06590a-083a-42cc-85a8-fcf02b524443" \
 | `timeline` | Eventos em ordem. |
 | `summary` | Rota, agentes, ferramentas e tokens. |
 
-#### 10.5.2 `GET /api/v1/audit/sessions/{session_id}` — Auditoria da sessao (sem prompts dos modelos)
+#### 10.6.2 `GET /api/v1/audit/sessions/{session_id}` — Auditoria da sessao (sem prompts dos modelos)
 
 **O que faz.** Igual à anterior, sem os prompts/saídas do modelo (`include_llm=false`).
 
@@ -3094,7 +3238,7 @@ curl -X GET "$BASE/api/v1/audit/sessions/9a06590a-083a-42cc-85a8-fcf02b524443?in
 |---|---|
 | `include_llm` | Inclui (`true`) ou omite (`false`) os prompts do modelo. |
 
-#### 10.5.3 `GET /api/v1/audit/executions/{execution_id}` — Auditoria de um turno (execution_id)
+#### 10.6.3 `GET /api/v1/audit/executions/{execution_id}` — Auditoria de um turno (execution_id)
 
 **O que faz.** Auditoria de uma mensagem específica.
 
@@ -3189,7 +3333,7 @@ curl -X GET "$BASE/api/v1/audit/executions/797d2dbf-c617-4a54-a932-1d4d83db9f5e"
 
 </details>
 
-#### 10.5.4 `GET /api/v1/audit/sessions/{session_id}/events` — Eventos brutos da sessao (filtro por tipo)
+#### 10.6.4 `GET /api/v1/audit/sessions/{session_id}/events` — Eventos brutos da sessao (filtro por tipo)
 
 **O que faz.** Lista os eventos brutos, com filtro por tipo.
 
