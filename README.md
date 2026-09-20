@@ -16,6 +16,7 @@ API de atendimento ao cliente com **agentes de IA orquestrados** (LangGraph), **
 8. [Orquestração na visão funcional (negócio)](#8-orquestração-na-visão-funcional-negócio)
 9. [Exemplos práticos de uso](#9-exemplos-práticos-de-uso)
 10. [Postman: a collection pasta por pasta](#10-postman-a-collection-pasta-por-pasta)
+11. [Estratégia de testes](#11-estratégia-de-testes)
 
 ---
 
@@ -442,7 +443,7 @@ Tudo o que foi usado na construção, agrupado pela função que cumpre.
 
 | Tecnologia | Uso |
 |---|---|
-| **pytest**, **pytest-asyncio** | ~750 testes (unitários, integração, segurança, e2e, avaliação de roteamento) |
+| **pytest**, **pytest-asyncio** | 762 testes (unitários, integração, segurança, e2e, avaliação de roteamento); estratégia no capítulo 11 |
 | **mongomock-motor** | Banco simulado nos testes (rápido, sem servidor) |
 | **ruff**, **mypy** | Lint, formatação e tipagem |
 | **Postman** | Collection de atendimento (21 requisições) e ambiente para explorar e validar a API (capítulo 10) |
@@ -3398,3 +3399,150 @@ curl -X GET "$BASE/api/v1/audit/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/ev
 | *Current value* / *Initial value* | Valor local (só na sua máquina) / valor compartilhado; a chave vai em *Current value* |
 | Tipo *secret* | Variável mascarada na tela do Postman |
 | Tests (scripts) | Código da requisição que valida a resposta e salva ids nas variáveis |
+
+---
+
+## 11. Estratégia de testes
+
+Esta seção responde a duas perguntas: **qual é a estratégia geral de testes** do projeto e **como eu abordaria testes de integração abrangentes**. Ela separa, com honestidade, o que **já existe e roda hoje** do que é o **próximo passo**.
+
+### 11.1 Princípios
+
+| Princípio | Como se traduz aqui |
+|---|---|
+| **Testar o que é nosso, não a "inteligência" do modelo** | O modelo de linguagem é não determinístico e pago. Os testes verificam a **orquestração**: rota escolhida, contratos, trava de segurança, máquina de estados do suporte, gravação, auditoria. A qualidade das respostas do modelo é medida à parte (11.5) |
+| **Determinismo e custo zero** | Nenhum teste chama a rede: LLM e embeddings são dublês controlados, o MongoDB é em memória e recriado a cada teste. A suíte inteira roda em **menos de 1 minuto**, offline |
+| **Testar pelas bordas reais** | Os testes de integração usam os **routers, middlewares e o grafo LangGraph reais** (token interno, identidade, chave do modelo, rate limit, tratamento de erros). O que se troca são só as dependências externas |
+| **Segurança é requisito testável** | Cada camada de defesa (6.9) tem teste próprio, inclusive adversarial |
+| **Cada bug vira teste** | Toda falha encontrada (inclusive nas execuções ao vivo, 11.6) ganhou um teste de regressão antes de ser dada como resolvida |
+| **Falha segura** | Testes garantem que, na dúvida, o sistema **não responde** (grounding baixo, erro do avaliador, timeout) em vez de inventar |
+
+### 11.2 A pirâmide de testes (situação atual)
+
+`pytest` coleta **762 testes**: **761 passam** e 1 é ignorado de propósito (o cliente HTTP já recusa caracteres de controle em cabeçalhos). `ruff` roda limpo.
+
+| Camada | Pasta | Testes | O que valida | Dependências |
+|---|---|---|---|---|
+| **Unitária** | `tests/unit` | 459 | Regras puras e componentes isolados: schemas, scanners de segurança, redação de dados, divisão em *chunks*, ranking de fontes web, seleção de skills/playbooks, classificação de saudações e de "deu certo?", máquina de estados de propostas, política de retentativa do grounding, cliente OpenRouter, métricas, configuração | Nenhuma externa |
+| **Integração** | `tests/integration` | 245 | A API de ponta a ponta com o **grafo real**: cada rota, cada caminho do fluxo (11.3) | Mongo em memória + LLM/embeddings dublês |
+| **Segurança** | `tests/security` | 51 | Vetores de ataque e garantias de não fabricação (11.4) | Idem |
+| **E2E** | `tests/e2e` | 6 | Jornadas completas: pergunta → resposta fundamentada; problema → chamado rastreável; feedback → proposta → aprovação humana → playbook real | Idem |
+| **Avaliação** | `tests/evaluation` | 1 | Acurácia de roteamento sobre um conjunto rotulado (mínimo 90%). Valida o **mecanismo** de avaliação; a medição com o modelo real é uma execução separada (11.5) | Classificador heurístico no lugar do LLM |
+
+Além disso, a **collection do Postman** carrega 28 asserções (`pm.test`) e serve como **teste de contrato e de fumaça contra a stack real** rodando no Docker.
+
+### 11.3 Como os testes de integração são montados
+
+O arquivo `tests/conftest.py` monta uma aplicação FastAPI com **os mesmos middlewares, handlers de erro e routers de produção**, sem subir o *lifespan* (que exigiria um MongoDB real), e injeta dublês só nas fronteiras externas:
+
+| Fixture | O que faz |
+|---|---|
+| `client` | `TestClient` da aplicação de teste (token interno fixado, telemetria real ligada, *rate limit* zerado a cada teste) |
+| `test_db` / `_isolated_database` (automática) | Banco **mongomock** novo por teste: sem estado entre testes, sem servidor. Impede que qualquer teste toque um MongoDB de verdade |
+| `fake_llm` | Dicionário `{Schema Pydantic: resposta}`. O teste declara o que o modelo "responderia" (por exemplo, a decisão do Router, o rascunho do Knowledge, a avaliação do grounding, a análise do problema). Se o código pedir um schema não configurado, o teste **falha**: nada acontece por acaso |
+| `fake_embeddings` | Vetores determinísticos: textos com a mesma palavra-chave ficam próximos. Permite testar limiar de similaridade, deduplicação e busca sem rede |
+| `_reset_graph_registry` (automática) | Recompila o grafo e limpa registros e travas entre testes |
+
+Um exemplo real do padrão (o teste declara a decisão do Router e a resposta do modelo e verifica o comportamento; o "modelo" nunca é chamado de verdade):
+
+```python
+fake_llm[RouterDecision] = RouterDecision(
+    intent=Intent.KNOWLEDGE, target_agent="knowledge_agent",
+    confidence=0.95, requires_clarification=False, reason_code="PRODUCT_QUESTION",
+)
+fake_llm[KnowledgeAnswerDraft] = KnowledgeAnswerDraft(
+    message="A taxa no credito e 1,99%.", grounded_in_sources=True
+)
+first = client.post(f"/api/v1/sessions/{session_id}/messages",
+                    json={"message": "Qual a taxa da maquininha no credito?", "user_id": "client_xpto"})
+# ... a 2a mensagem deve carregar o contexto da 1a no prompt do modelo:
+assert "Contexto recente da conversa" in system_prompt
+```
+
+**O que os 245 testes de integração cobrem** (agrupados por tema; cada um é um ou mais arquivos em `tests/integration`):
+
+| Tema | Cenários verificados |
+|---|---|
+| **Contrato da API** | Formato de `AgentResponse` em todas as rotas de mensagem; documentação OpenAPI; identidade por cabeçalhos (`X-User-Id`, `X-Session-Id`), divergência de identidade e ausência de cabeçalho; chave do modelo obrigatória e mapeamento de erros do provedor (401, 402, indisponibilidade); limite de requisições |
+| **Roteamento** | Intenções do Router, esclarecimento, multiagente em sequência, guardas por código (URL, código de erro, pedido de atendente) |
+| **RAG e web** | Base primeiro; consulta às páginas quando a base não responde; só trechos relevantes são salvos; reuso na segunda pergunta; guarda de código de erro (não aceitar trecho de outro código); retentativa com a web quando o grounding reprova |
+| **Grounding** | Aprovação, reprovação, retentativa, falha do avaliador escala (nunca entrega sem validar); casos multiagente |
+| **Suporte guiado** | 32 cenários da máquina de estados: pergunta quando vago, passo a passo, "deu certo" / "não deu certo", limite de perguntas, "quero atendente" antes de entender, idempotência do chamado, **trava de completude** (não abre chamado incompleto) |
+| **Feedback** | Feedback manual e automático (nota 0–3), Feedback Agent, propostas, aprovação/rejeição, **nada é aplicado sem aprovação humana** |
+| **Definições como código** | Sincronização de YAML (skills, playbooks, keywords, fontes) com hash; o banco nasce vazio no boot |
+| **Auditoria e métricas** | Explicação em português, linha do tempo, dados sensíveis mascarados, métricas Prometheus |
+| **Resiliência** | Retomada de execução, checkpoints, concorrência na mesma sessão (serialização), expiração de memória, falhas do provedor |
+
+### 11.4 Testes de segurança e "anti-fabricação"
+
+| Teste | Garantia |
+|---|---|
+| `test_llm_security_vectors` | Frases de *jailbreak* e injeção são bloqueadas **antes** de qualquer agente; o usuário não consegue se declarar administrador pela mensagem; ferramenta fora da lista autorizada não roda; ferramenta de escrita exige autorização; *timeout* de ferramenta e limite de iterações do grafo; tamanho máximo de mensagem; vazamento de segredos na saída é barrado |
+| `test_rag_poisoning` | Injeção **indireta**: um documento recuperado que manda "ignore as instruções" é sempre inserido no prompt delimitado como **dado não confiável** |
+| `test_support_no_fabrication` | O agente de suporte **não inventa** ticket nem solução; sem fonte, encaminha |
+| `test_grounding_failsafe` | Avaliador de grounding falha ou estoura o prazo → escala, nunca entrega resposta não validada |
+| `test_feedback_*_no_auto_apply` / `test_feedback_proposal_authorization` | Melhoria proposta pela IA só vale após aprovação humana com revisor identificado |
+| `test_metrics_endpoint_security` | `/metrics` exige o token interno |
+
+### 11.5 Como eu abordaria testes de integração abrangentes (plano)
+
+A suíte atual prova **a lógica** com dependências dublês. Para provar que **o conjunto funciona de verdade**, eu completaria a estratégia em quatro frentes, nesta ordem de retorno sobre esforço:
+
+| # | Frente | O que faria | Situação |
+|---|---|---|---|
+| 1 | **Pipeline de CI** | A cada *pull request*: `ruff` + `pytest` + varredura de segredos (`detect-secrets`, já configurado no `pre-commit`) + *build* da imagem Docker, e `mypy` como portão depois de zerar os avisos de tipagem. Portões: falhou, não entra | `pytest`, `ruff` e `detect-secrets` prontos; `mypy` só configurado; **falta o workflow de CI** |
+| 2 | **Integração com dependências reais** | Subir o **MongoDB Atlas Local** e o app pelo `docker compose` no CI e rodar um conjunto marcado (`@pytest.mark.live`) que valida o que o mongomock não simula: criação dos **índices vetoriais**, tolerância ao serviço de busca demorar a subir, sincronização das definições no boot e "banco nasce vazio" contra o Mongo verdadeiro | Validado **manualmente** em toda subida da stack; **falta automatizar** |
+| 3 | **Contrato e fumaça da API no ambiente real** | Executar a collection do Postman com o **Newman** (CLI) contra a stack do CI, com chave de modelo de baixo custo em segredo do CI. Complementar com teste de propriedades sobre o OpenAPI (Schemathesis) para achar entradas que quebram rotas | A collection e as asserções existem; **falta rodar no CI** |
+| 4 | **Qualidade do modelo (avaliação)** | Conjunto rotulado maior (roteamento, respostas esperadas por tópico, perguntas fora de escopo, ataques) executado **contra o modelo real**, com limiares (acurácia de roteamento ≥ 90%, grounding médio ≥ 4, zero vazamento) e orçamento de custo; *record/replay* das chamadas para reproduzir falhas sem gastar. Rodaria por agenda (*nightly*) e antes de trocar de modelo | Mecanismo pronto (`tests/evaluation`); **falta o conjunto e a execução com o modelo real** |
+
+Complementos que eu adicionaria na sequência:
+
+- **Não funcionais:** teste de carga (k6 ou Locust) para dimensionar o limite de requisições e medir a latência p95 por agente pelas métricas `getnet_*`; teste de **caos** simples (derrubar o MongoDB ou o OpenRouter durante uma conversa e verificar a degradação graciosa).
+- **Cobertura:** relatório de cobertura por camada com meta de **≥ 85% na orquestração e na segurança** (`pytest-cov`), sem perseguir 100% em código de fronteira.
+- **Dados de teste versionados:** perguntas, respostas esperadas e páginas de referência em arquivos, para que a avaliação seja reprodutível.
+- **Observabilidade como teste:** asserção de que cada requisição gera *trace*, métrica e evento de auditoria com o mesmo `request_id`.
+
+### 11.6 O que os testes ao vivo já pegaram
+
+Além da suíte automatizada, todo o fluxo foi executado **com o modelo real** contra a stack do Docker (as respostas do capítulo 9 são dessas execuções). Isso encontrou problemas que os dublês não mostrariam, e cada um virou correção com teste de regressão:
+
+| Achado ao vivo | Correção |
+|---|---|
+| Trecho da base do erro **4-91** aceito para uma pergunta sobre o **4-83** | Guarda de código de erro |
+| Frase "Ignore **todas as suas** instruções anteriores…" **não** era bloqueada (o scanner só reconhecia frases exatas) | Padrões flexíveis no scanner e testes de variações benignas e maliciosas |
+| Uma leitura lenta de páginas passava dos 30 s e derrubava a requisição com **erro 500** | Prazo próprio do agente (`AGENT_TIMEOUT_SECONDS`, 90 s); estourar vira encaminhamento ao atendimento (`AGENT_TIMEOUT`), com teste |
+| "Quero falar com um atendente" como primeira mensagem ia para a rota errada | Guarda de pedido de atendente no Router |
+| Resposta com grounding baixo era entregue sem novo esforço | Retentativa com o feedback do avaliador e, se preciso, com a web |
+| Testes lentos (30–180 s) por tentarem abrir um MongoDB real | Banco em memória automático em todos os testes |
+
+### 11.7 Como rodar
+
+```bash
+# instalar dependências de desenvolvimento
+pip install -e ".[dev]"
+
+pytest -q                       # tudo (menos de 1 min, offline)
+pytest tests/unit -q            # só unitários
+pytest tests/integration -q     # só integração
+pytest tests/security -q        # só segurança
+pytest -k suporte -q            # por palavra no nome
+ruff check src tests            # estilo e erros comuns
+mypy src                        # tipagem (configurado; ainda não é portão)
+```
+
+Modo offline também para a aplicação inteira: com `LLM_PROVIDER=fake` no `.env`, a stack sobe e responde com saídas simuladas e determinísticas, útil para demonstrar o fluxo sem custo.
+
+### Glossário do capítulo 11
+
+| Termo | Significado |
+|---|---|
+| Dublê (*fake* / *mock*) | Substituto controlado de uma dependência externa (LLM, embeddings, banco) usado nos testes |
+| mongomock | Banco MongoDB em memória, criado novo a cada teste |
+| Teste de integração | Exercita várias partes reais juntas (rota, middleware, grafo, repositórios) trocando só o que é externo |
+| Teste E2E | Percorre uma jornada completa do usuário |
+| Teste de contrato | Verifica que entrada e saída seguem o formato prometido (schemas, OpenAPI) |
+| Regressão | Falha que já foi corrigida e voltaria; o teste impede que volte |
+| Newman | Executa collections do Postman pela linha de comando (CI) |
+| Schemathesis | Gera entradas automaticamente a partir do OpenAPI para achar falhas |
+| *Record/replay* | Grava as respostas reais do modelo uma vez e as reutiliza nos testes |
+| CI | Integração contínua: pipeline automático que roda lint e testes a cada alteração |
