@@ -164,7 +164,7 @@ A primeira pergunta de um assunto costuma demorar **10–25 s** (o agente vai à
 
 1. No Postman, **Import** e selecione `docs/postman/getnet-atendimento.postman_collection.json` e `docs/postman/getnet-atendimento.postman_environment.json`.
 2. Escolha o ambiente **Getnet Atendimento - Local** e preencha `llm_api_key` (aba *Current value*, tipo *secret*: a chave fica só no seu Postman; o arquivo do repositório vai vazio).
-3. Rode as pastas na ordem (`01` → `05`). Os ids (`session_id`, `ticket_id`...) são salvos sozinhos nas variáveis. Detalhes no capítulo 10.
+3. Rode as pastas na ordem (`01` → `04`). Os ids (`session_id`, `execution_id`...) são salvos sozinhos nas variáveis. Detalhes no capítulo 10.
 
 ### 1.9 Rodar sem Docker para o app (desenvolvimento) e testes
 
@@ -445,7 +445,7 @@ Tudo o que foi usado na construção, agrupado pela função que cumpre.
 | **pytest**, **pytest-asyncio** | ~750 testes (unitários, integração, segurança, e2e, avaliação de roteamento) |
 | **mongomock-motor** | Banco simulado nos testes (rápido, sem servidor) |
 | **ruff**, **mypy** | Lint, formatação e tipagem |
-| **Postman** | Collection de atendimento (35 requisições) e ambiente para explorar e validar a API (capítulo 10) |
+| **Postman** | Collection de atendimento (19 requisições) e ambiente para explorar e validar a API (capítulo 10) |
 
 ### Glossário do capítulo 4
 
@@ -469,7 +469,7 @@ A plataforma expõe **quatro visões** complementares. Todas se correlacionam pe
 | **Traces** | OpenTelemetry → Collector → **Tempo** (visto no Grafana) | "Onde o tempo foi gasto nesta requisição?" (cada nó, agente, ferramenta e chamada ao modelo é um *span*) | Grafana → *Explore* → fonte **Tempo** |
 | **Métricas** | OpenTelemetry → **Prometheus** → Grafana | "Quantos tokens, quantas requisições, qual a latência, qual a qualidade?" | `http://localhost:3000` (painel *Getnet — Visão Operacional*) e `http://localhost:9090` |
 | **Logs** | structlog (JSON) → **Promtail** → **Loki** | "O que a aplicação registrou?" (uma linha JSON por evento) | Grafana → *Explore* → fonte **Loki** |
-| **Auditoria de negócio** | API `GET /api/v1/audit/...` (dados no MongoDB) | "Por que o agente respondeu isso?" | Capítulo 6.10 e capítulo 10 (pasta 05) |
+| **Auditoria de negócio** | API `GET /api/v1/audit/...` (dados no MongoDB) | "Por que o agente respondeu isso?" | Capítulo 6.10 e capítulo 10 (pasta 04) |
 
 ### 5.1 Painel do Grafana
 
@@ -1771,14 +1771,14 @@ Arquivos (na pasta [`docs/postman`](docs/postman)):
 
 | Arquivo | Para que serve |
 |---|---|
-| `getnet-atendimento.postman_collection.json` | Collection **de atendimento** (esta seção): saúde e docs, sessões e mensagens, suporte guiado e chamados, fontes web e auditoria. 35 requisições. |
+| `getnet-atendimento.postman_collection.json` | Collection **de atendimento** (esta seção): saúde e docs, sessão e mensagens, fontes web e auditoria. 19 requisições. |
 | `getnet-atendimento.postman_environment.json` | Ambiente **Getnet Atendimento - Local** com as variáveis usadas por ela. A chave do OpenRouter **vem vazia**. |
 
 ### 10.1 Configuração e conceitos comuns
 
 1. No Postman: **Import** → selecione a collection e o environment; escolha o ambiente **Getnet Atendimento - Local** (canto superior direito).
 2. Abra o ambiente e preencha, na coluna *Current value*, `llm_api_key` (sua chave do OpenRouter). O valor **fica só no seu Postman** (tipo *secret*); o arquivo do repositório vai vazio e não deve ser alterado com a chave.
-3. Rode as pastas na ordem. Cada requisição tem *tests* que salvam ids (`session_id`, `ticket_id`...) nas variáveis, de modo que a próxima já usa o valor certo.
+3. Rode as pastas na ordem. Cada requisição tem *tests* que salvam ids (`session_id`, `execution_id`...) nas variáveis, de modo que a próxima já usa o valor certo.
 
 **Variáveis do ambiente**
 
@@ -1787,11 +1787,9 @@ Arquivos (na pasta [`docs/postman`](docs/postman)):
 | `base_url` | Endereço da API (`http://localhost:8000`). |
 | `internal_token` | Valor de `INTERNAL_SERVICE_TOKEN`; a collection o envia como `X-Internal-Service-Token` em todas as rotas. |
 | `llm_api_key` | Chave do OpenRouter; enviada como `X-API-Key-LLM` só nas rotas que usam modelo. |
-| `web_url` | URL usada no exemplo de mensagem com link. |
 | `user_id` | Identificador do cliente nos exemplos (`u-demo`). |
 | `session_id`, `execution_id` | Preenchidos sozinhos ao criar a sessão e ao enviar mensagens. |
-| `support_session_id`, `ticket_id` | Sessão e chamado do cenário de suporte guiado (pasta 03). |
-| `web_source_id` | Fonte web criada na pasta 04. |
+| `web_source_id` | Fonte web criada na pasta 03. |
 
 **Cabeçalhos**
 
@@ -1988,54 +1986,41 @@ curl -X GET "$BASE/openapi.json"
 
 > A resposta é grande; o exemplo abaixo mostra só o topo.
 
-### 10.3 Pasta 02 — Atendimento: sessões, mensagens e gestão de sessões
+### 10.3 Pasta 02 — Atendimento: sessão e mensagens
 
-**O que é.** Conversar com o agente e gerir a conversa: criar a sessão, enviar mensagens, consultar, listar execuções, retomar e fechar.
+**O que é.** Conversar com o agente: criar a sessão, enviar mensagens e gerir a conversa (consultar, listar execuções, fechar).
 
 **Quando usar.** É o fluxo principal do canal (site, app, WhatsApp) para o atendimento ao cliente.
 
-**Por que existe.** A sessão liga as mensagens a um cliente e permite auditar, retomar e encerrar a conversa.
+**Por que existe.** A sessão liga as mensagens a um cliente e permite auditar e encerrar a conversa. Uma única rota de mensagem atende dúvidas, problemas e suporte guiado: o Router decide o caminho.
 
 **Requisições da pasta**
 
 | # | Requisição | O que faz | Por que usar |
 |---|---|---|---|
 | 10.3.1 | `POST /api/v1/sessions` | Abre uma nova conversa e devolve o `session_id`. | Toda conversa começa aqui. Guarda o contexto para as mensagens seguintes. |
-| 10.3.2 | `POST /api/v1/sessions/{session_id}/messages` | Envia a primeira mensagem. Saudação não vai a base nem a sites: o agente responde na hora com uma **mensagem… | Receber o cliente de forma amigável e mostrar o que dá para perguntar. Custo zero de modelo. |
-| 10.3.3 | `POST /api/v1/sessions/{session_id}/messages` | Pergunta de conhecimento na MESMA sessão. O agente consulta a base; se não responde, vai às fontes web, respo… | Mostra o coração do RAG: a 1ª pergunta do tema pode ir ao site; as seguintes saem da base. |
-| 10.3.4 | `POST /api/v1/sessions/{session_id}/messages` | Segue a conversa com outro assunto (Pix). O agente escolhe o sub-playbook e as skills de Pix. | Ver o agente trocando de assunto na mesma sessão, com o histórico disponível. |
-| 10.3.5 | `POST /api/v1/sessions/{session_id}/messages` | Pergunta que nem a base nem as fontes sabem responder. | Garantir que o agente **não inventa**: orienta a procurar a central de atendimento. |
-| 10.3.6 | `POST /api/v1/sessions/{session_id}/messages` | O cliente cola um link na pergunta. O agente consulta a base; se não responde, lê **aquela página**, salva o… | Perguntas sobre uma página específica ("segundo este link, como faço..."). |
-| 10.3.7 | `POST /api/v1/sessions/{session_id}/messages` | Relato de problema com a maquininha, sem código de erro. | Exercita o **suporte guiado** (Customer Support Agent): o agente entende o problema antes de agir; se estiver… |
-| 10.3.8 | `POST /api/v1/sessions/{session_id}/messages` | Mensagem com dois assuntos (informação + problema). | Mostra o Router acionando os dois agentes e compondo uma resposta única. |
-| 10.3.9 | `POST /api/v1/sessions/{session_id}/messages` | Mensagem vaga ("Preciso de ajuda"). | O agente pede detalhes em vez de chutar. |
-| 10.3.10 | `GET /api/v1/sessions/{session_id}` | Devolve o estado da sessão. | Saber se a conversa está aberta e qual foi a última execução. |
-| 10.3.11 | `GET /api/v1/sessions/{session_id}/executions` | Lista as execuções (mensagens processadas) da sessão. | Ver o histórico de mensagens/decisões e achar um `execution_id`. |
-| 10.3.12 | `GET /api/v1/executions/{execution_id}` | Detalha uma execução do Feedback Agent. | Ver o que ela processou. |
-| 10.3.13 | `POST /api/v1/executions/{execution_id}/resume` | Reprocessa uma execução interrompida usando a mensagem original. | Recuperar uma mensagem que caiu no meio (falha de rede, reinício). |
-| 10.3.14 | `POST /api/v1/sessions/{session_id}/close` | Encerra a conversa. | Marcar o fim do atendimento; mensagens novas exigem outra sessão. |
-| 10.3.15 | `GET /api/v1/agents` | Lista os agentes do sistema e o que cada um faz. | Descobrir capacidades disponíveis. |
-| 10.3.16 | `GET /api/v1/agents/knowledge_agent` | Detalha um agente pelo nome. | Conferir versão/estado de um agente. |
+| 10.3.2 | `POST /api/v1/sessions/{session_id}/messages` | Envia a mensagem do cliente e devolve a resposta do agente (dúvida, problema ou saudação). | É a rota central do atendimento: o Router escolhe o caminho (base, páginas homologadas ou suporte guiado) e a… |
+| 10.3.3 | `GET /api/v1/sessions/{session_id}` | Devolve o estado da sessão. | Saber se a conversa está aberta e qual foi a última execução. |
+| 10.3.4 | `GET /api/v1/sessions/{session_id}/executions` | Lista as execuções (mensagens processadas) da sessão. | Ver o histórico de mensagens/decisões e achar um `execution_id`. |
+| 10.3.5 | `GET /api/v1/executions/{execution_id}` | Detalha uma execução do Feedback Agent. | Ver o que ela processou. |
+| 10.3.6 | `POST /api/v1/sessions/{session_id}/close` | Encerra a conversa. | Marcar o fim do atendimento; mensagens novas exigem outra sessão. |
 
 **Passo a passo da pasta**
 
-1. `Criar sessão` (uma vez por conversa) → guarde o `session_id`.
-2. Envie cada mensagem para `POST /sessions/{session_id}/messages`, sempre com o mesmo `session_id` na URL e no cabeçalho `X-Session-Id` — assim a conversa continua.
-3. Leia `status`, `message` e `sources` da resposta.
-4. Para entender o porquê da resposta, consulte a pasta 10 (Auditoria).
-5. Ao terminar, `Fechar sessão`.
+1. `Criar sessao` (uma vez por conversa) → guarda o `session_id`.
+2. `Enviar mensagem`: troque o texto do body e envie; a conversa continua na mesma sessão.
+3. Leia `status`, `message` e `sources`; se abrir chamado, `metadata.ticket_id` traz o número.
+4. Para entender o porquê, use a pasta 04 (Auditoria). `Fechar sessao` ao terminar.
 
 **Glossário da pasta**
 
 | Termo | Significado |
 |---|---|
-| Sessão | Uma conversa. Tem um `session_id`, pertence a um `user_id` e guarda o histórico. |
+| Sessão | Uma conversa: tem `session_id`, pertence a um `user_id` e guarda o histórico. |
 | Execução | O processamento de UMA mensagem (`execution_id`): roteamento, agentes, ferramentas e resposta. |
-| `status` | `OK` (respondeu), `INSUFFICIENT_CONTEXT` (não achou a informação), `CLARIFICATION_REQUIRED` (precisa de mais detalhe), `ESCALATION_REQUIRED` (encaminhado a humano), `SECURITY_BLOCKED` (bloqueado por segurança), `ERROR`. |
-| `agent` | Quem respondeu: `knowledge_agent` (dúvidas/RAG), `customer_support_agent` (problemas com dispositivo), `multi_agent` (os dois), `welcome` (saudação), `router_agent` (pediu esclarecimento). |
-| `sources` | Onde a resposta foi buscada: `document_id`, `chunk_id`, `score` (similaridade 0–1) e, se veio de uma página, a `url`. |
-| `grounding_score` | Nota 0–5 que mede se a resposta é sustentada pelas fontes. Abaixo do mínimo (3) a resposta é refeita ou escalada. |
-| Router | Primeira etapa: classifica a intenção (dúvida, suporte, os dois, esclarecimento, saudação). |
+| `status` | `OK`, `INSUFFICIENT_CONTEXT`, `CLARIFICATION_REQUIRED`, `ESCALATION_REQUIRED`, `SECURITY_BLOCKED` ou `ERROR` (tabela em 10.1). |
+| `sources` | Trechos e páginas de onde a resposta veio (`document_id`, `chunk_id`, `score`, `url`). |
+| `grounding_score` | Nota 0–5 de sustentação da resposta nas fontes; o mínimo é 3. |
 
 #### 10.3.1 `POST /api/v1/sessions` — Criar sessao
 
@@ -2081,71 +2066,16 @@ curl -X POST "$BASE/api/v1/sessions" \
 | `channel` | Canal de origem. |
 | `last_execution_id` | Última mensagem processada. |
 
-#### 10.3.2 `POST /api/v1/sessions/{session_id}/messages` — Mensagem 1 - saudacao (Ola)
+#### 10.3.2 `POST /api/v1/sessions/{session_id}/messages` — Enviar mensagem
 
-**O que faz.** Envia a primeira mensagem. Saudação não vai a base nem a sites: o agente responde na hora com uma **mensagem de boas-vindas** que lista o que resolve e dá exemplos.
+**O que faz.** Envia a mensagem do cliente e devolve a resposta do agente (dúvida, problema ou saudação).
 
-**Por que usar.** Receber o cliente de forma amigável e mostrar o que dá para perguntar. Custo zero de modelo.
-
-**Quando / passo a passo.**
-1. Envie `{"message": "Ola"}` para a sessão criada.
-2. Leia `agent: welcome`, `status: OK`.
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/messages" \
-  -H "X-User-Id: u-demo" \
-  -H "X-Session-Id: 9a06590a-083a-42cc-85a8-fcf02b524443" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{"message": "Ola"}'
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "status": "OK",
-  "agent": "welcome",
-  "message": "Olá! Eu sou o assistente virtual de atendimento da Getnet. Como posso te ajudar hoje?\n\nPosso ajudar com:\n- Taxas e prazos: taxa por transação (MDR), plano de recebimento reduzido, quando o dinheiro da venda cai.\n- Estornos e chargeback: como estornar uma venda na maquininha ou pelo aplicativo.\n- Pix: como habilitar, vender com Pix na maquininha e usar o Pix por biometria.\n- Maquininha: como vender, configurar o Wi-Fi, consultar vendas, erros comuns e manutenção.\n- Cadastro e conta: atualizar dad…",
-  "sources": [],
-  "metadata": {
-    "execution_id": "3f409952-a5c8-4d56-a86b-735e8202d73d",
-    "confidence": 1.0,
-    "grounded_in_sources": null,
-    "grounding_score": null,
-    "grounding_reasoning": null,
-    "error_code": null,
-    "ticket_id": null
-  }
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `agent: welcome` | Resposta de boas-vindas (saudação, agradecimento, despedida ou "o que você faz?"). |
-| `grounding_score: null` | Não há conteúdo factual a avaliar. |
-
-> Se a saudação vier com uma pergunta ("Olá, como estorno?"), segue o fluxo normal.
-
-#### 10.3.3 `POST /api/v1/sessions/{session_id}/messages` — Mensagem 2 - continuar a conversa (base vetorial primeiro, depois site)
-
-**O que faz.** Pergunta de conhecimento na MESMA sessão. O agente consulta a base; se não responde, vai às fontes web, responde e **salva os trechos relevantes**.
-
-**Por que usar.** Mostra o coração do RAG: a 1ª pergunta do tema pode ir ao site; as seguintes saem da base.
+**Por que usar.** É a rota central do atendimento: o Router escolhe o caminho (base, páginas homologadas ou suporte guiado) e a resposta traz as fontes e a nota de grounding.
 
 **Quando / passo a passo.**
-1. Reuse o `session_id` (não crie outra sessão).
-2. Envie a pergunta.
-3. Repita a mesma pergunta em outra sessão: `sources` passa a ser `base:...` (sem ir ao site).
+1. Crie a sessão e use o mesmo `session_id` na URL e em `X-Session-Id`.
+2. Troque o texto do body e envie.
+3. Se o suporte guiado abrir chamado, o número vem em `metadata.ticket_id`.
 
 **Requisição**
 
@@ -2198,332 +2128,9 @@ curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/message
 | `sources[].url` | Presente quando o trecho veio de uma página. |
 | `confidence` | Maior similaridade entre as fontes. |
 
-> Requer `X-API-Key-LLM`.
+> Requer `X-API-Key-LLM`. Exemplos de conversas completas no capítulo 9.
 
-#### 10.3.4 `POST /api/v1/sessions/{session_id}/messages` — Mensagem 3 - pergunta de acompanhamento (Pix)
-
-**O que faz.** Segue a conversa com outro assunto (Pix). O agente escolhe o sub-playbook e as skills de Pix.
-
-**Por que usar.** Ver o agente trocando de assunto na mesma sessão, com o histórico disponível.
-
-**Quando / passo a passo.**
-1. Envie a pergunta na mesma sessão.
-2. Na auditoria veja `Sub-playbook do assunto escolhido pelas Keywords: pb_pix`.
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/messages" \
-  -H "X-User-Id: u-demo" \
-  -H "X-Session-Id: 9a06590a-083a-42cc-85a8-fcf02b524443" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{"message": "E como habilito o Pix na minha maquininha?"}'
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "status": "OK",
-  "agent": "knowledge_agent",
-  "message": "Para habilitar o Pix na sua maquininha, existem maneiras diferentes conforme o canal. Abaixo apresento os pré-requisitos e os passos principais para cada opção. Observação: para habilitar é necessário ter um perfil administrativo e senha.\n\n- Via maquininha (fluxo de venda com Pix na máquina):\n  1) Ligue a máquina e selecione a opção de pagamento.\n  2) Digite o valor da venda e pressione Continuar.\n  3) Quando aparecerem as opções Débito/Crédito/Voucher/Pix, escolha Pix.\n  4) Apresente o QR Code…",
-  "sources": [
-    {
-      "document_id": "2b8c8a6b-3195-46a4-8f37-6ba123830f71",
-      "chunk_id": "11b71da4-535a-43d1-a703-5341857bedae",
-      "score": 0.7248079929773437,
-      "url": "https://site.getnet.com.br/get-ajuda-pix/como-habilitar-pix-pelo-portal/"
-    },
-    "... (+4 fontes)"
-  ],
-  "metadata": {
-    "execution_id": "285c00b1-c4d6-41e2-8ec7-6dd53603a091",
-    "confidence": 0.7248079929773437,
-    "grounded_in_sources": false,
-    "grounding_score": 5,
-    "grounding_reasoning": "Resposta cobre todas as vias de habilitação (maquininha, portal/app Getnet Brasil e Get Tap) e fornece passos consistentes com o contexto; n…",
-    "error_code": null,
-    "ticket_id": null
-  }
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| Sub-playbook | Procedimento do assunto escolhido pelas Keywords. |
-
-> Requer `X-API-Key-LLM`.
-
-#### 10.3.5 `POST /api/v1/sessions/{session_id}/messages` — Mensagem - fora da base e dos sites (central de atendimento)
-
-**O que faz.** Pergunta que nem a base nem as fontes sabem responder.
-
-**Por que usar.** Garantir que o agente **não inventa**: orienta a procurar a central de atendimento.
-
-**Quando / passo a passo.**
-1. Envie a pergunta.
-2. Espere `status: INSUFFICIENT_CONTEXT` e a mensagem da central; nada é salvo na base.
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/messages" \
-  -H "X-User-Id: u-demo" \
-  -H "X-Session-Id: 9a06590a-083a-42cc-85a8-fcf02b524443" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{"message": "Qual foi o faturamento da Getnet em 1998?"}'
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "status": "INSUFFICIENT_CONTEXT",
-  "agent": "knowledge_agent",
-  "message": "Nao encontrei essa informacao na nossa base de conhecimento nem nos sites oficiais da Getnet que consultei. Para te ajudar melhor, entre em contato com a central de atendimento da Getnet.",
-  "sources": [],
-  "metadata": {
-    "execution_id": "316741c3-1091-4d59-85da-ddcd3892190a",
-    "confidence": 0.0,
-    "grounded_in_sources": null,
-    "grounding_score": null,
-    "grounding_reasoning": "Nao avaliado: a resposta tem status INSUFFICIENT_CONTEXT (procedural) e nao contem conteudo substantivo para avaliar.",
-    "error_code": null,
-    "ticket_id": null
-  }
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `INSUFFICIENT_CONTEXT` | Sem informação suficiente para responder com segurança. |
-
-> Requer `X-API-Key-LLM`.
-
-#### 10.3.6 `POST /api/v1/sessions/{session_id}/messages` — Mensagem - com URL na mensagem (RAG web)
-
-**O que faz.** O cliente cola um link na pergunta. O agente consulta a base; se não responde, lê **aquela página**, salva o que é relevante e responde.
-
-**Por que usar.** Perguntas sobre uma página específica ("segundo este link, como faço...").
-
-**Quando / passo a passo.**
-1. Inclua a URL na `message`.
-2. `sources[].url` mostra a página de origem.
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/messages" \
-  -H "X-User-Id: u-demo" \
-  -H "X-Session-Id: 9a06590a-083a-42cc-85a8-fcf02b524443" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{"message": "Segundo https://site.getnet.com.br/get-ajuda-cadastro/como-redefinir-a-senha-aplicativo/ , como faco para redefinir a senha do aplicativo?"}'
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "status": "OK",
-  "agent": "knowledge_agent",
-  "message": "Para redefinir a senha do aplicativo Getnet Brasil:\n1) Abra o aplicativo Getnet Brasil e, na tela de login, toque em 'Esqueci minha senha'.\n2) Você receberá um link no e-mail cadastrado.\n3) Abra o link e escolha uma nova senha.\n4) Digite novamente a nova senha para confirmar. Pronto — a senha foi redefinida com sucesso.",
-  "sources": [
-    {
-      "document_id": "0d5744cf-70b6-4566-a517-20634d9abbf3",
-      "chunk_id": "7b7174b3-e702-4b0e-9be1-9ad0145649f0",
-      "score": 0.6777075600870327,
-      "url": null
-    }
-  ],
-  "metadata": {
-    "execution_id": "d4381dcb-3122-49e8-9aa9-bc8faa0c7abb",
-    "confidence": 0.6777075600870327,
-    "grounded_in_sources": true,
-    "grounding_score": 5,
-    "grounding_reasoning": "A resposta segue exatamente o passo a passo para redefinir a senha do aplicativo, conforme o contexto recuperado, sem contradições ou inform…",
-    "error_code": null,
-    "ticket_id": null
-  }
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| URL na mensagem | Tem prioridade sobre as fontes cadastradas. |
-
-> Requer `X-API-Key-LLM`.
-
-#### 10.3.7 `POST /api/v1/sessions/{session_id}/messages` — Mensagem - problema no dispositivo
-
-**O que faz.** Relato de problema com a maquininha, sem código de erro.
-
-**Por que usar.** Exercita o **suporte guiado** (Customer Support Agent): o agente entende o problema antes de agir; se estiver vago, pergunta; se houver passo a passo publicado, entrega e confirma; se não houver, abre chamado.
-
-**Quando / passo a passo.**
-1. Envie o relato.
-2. Veja `status`: `CLARIFICATION_REQUIRED`, `OK` (passo a passo) ou `ESCALATION_REQUIRED` (com `metadata.ticket_id`).
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/messages" \
-  -H "X-User-Id: u-demo" \
-  -H "X-Session-Id: 9a06590a-083a-42cc-85a8-fcf02b524443" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{"message": "Minha maquininha nao conecta"}'
-```
-
-**Respostas possíveis** — o formato é o `AgentResponse` (veja 10.1):
-
-| `status` | Quando |
-|---|---|
-| `CLARIFICATION_REQUIRED` | O agente pergunta o que falta (ex.: "qual é a mensagem de erro?"). |
-| `OK` | Devolve o passo a passo da página oficial e pergunta "Deu certo?". |
-| `ESCALATION_REQUIRED` | Sem solução publicada, ou o prazo do agente estourou (`AGENT_TIMEOUT`): encaminha ao atendimento. |
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `metadata.ticket_id` | Número do chamado quando o agente escala (`TKT-000001`). |
-
-> Requer `X-API-Key-LLM`. O fluxo completo, com o chamado, está na pasta 03.
-
-#### 10.3.8 `POST /api/v1/sessions/{session_id}/messages` — Mensagem - multi-agente
-
-**O que faz.** Mensagem com dois assuntos (informação + problema).
-
-**Por que usar.** Mostra o Router acionando os dois agentes e compondo uma resposta única.
-
-**Quando / passo a passo.**
-1. Envie a mensagem mista.
-2. `agent: multi_agent`; a resposta traz uma parte por agente.
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/messages" \
-  -H "X-User-Id: u-demo" \
-  -H "X-Session-Id: 9a06590a-083a-42cc-85a8-fcf02b524443" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{"message": "Qual a taxa da maquininha e ela esta com problema, nao conecta"}'
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "status": "ESCALATION_REQUIRED",
-  "agent": "multi_agent",
-  "message": "[knowledge_agent] Nao encontrei essa informacao na nossa base de conhecimento nem nos sites oficiais da Getnet que consultei. Para te ajudar melhor, entre em contato com a central de atendimento da Getnet.\n\n[customer_support_agent] Entendi o seu problema (Maquininha não conecta (problema de conectividade entre o equipamento e a rede/serviços)), mas nao encontrei nos nossos materiais uma solucao para ele. Abri o chamado **TKT-000001** com tudo o que voce me contou e o que ja tentamos, para a noss…",
-  "sources": [],
-  "metadata": {
-    "execution_id": "f3e52048-07d7-4f73-8b1d-a64e6bf8e05b",
-    "confidence": 0.0,
-    "grounded_in_sources": null,
-    "grounding_score": null,
-    "grounding_reasoning": "Nao avaliado: a resposta tem status ESCALATION_REQUIRED (procedural) e nao contem conteudo substantivo para avaliar.",
-    "error_code": null,
-    "ticket_id": null
-  }
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `multi_agent` | Resposta composta; o status é o mais severo entre as partes. |
-
-> Requer `X-API-Key-LLM`.
-
-#### 10.3.9 `POST /api/v1/sessions/{session_id}/messages` — Mensagem - ambigua (esclarecimento)
-
-**O que faz.** Mensagem vaga ("Preciso de ajuda").
-
-**Por que usar.** O agente pede detalhes em vez de chutar.
-
-**Quando / passo a passo.**
-1. Envie a mensagem vaga.
-2. Espere `status: CLARIFICATION_REQUIRED`.
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/messages" \
-  -H "X-User-Id: u-demo" \
-  -H "X-Session-Id: 9a06590a-083a-42cc-85a8-fcf02b524443" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{"message": "Preciso de ajuda"}'
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "status": "CLARIFICATION_REQUIRED",
-  "agent": "router_agent",
-  "message": "Nao consegui entender completamente sua solicitacao. Pode me dar mais detalhes sobre o que voce precisa (por exemplo, se e uma duvida geral ou um problema com um dispositivo)?",
-  "sources": [],
-  "metadata": {
-    "execution_id": "797d2dbf-c617-4a54-a932-1d4d83db9f5e",
-    "confidence": 0.6,
-    "grounded_in_sources": null,
-    "grounding_score": null,
-    "grounding_reasoning": null,
-    "error_code": null,
-    "ticket_id": null
-  }
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `CLARIFICATION_REQUIRED` | Faltam detalhes; responda à pergunta do agente na mesma sessão. |
-
-> Requer `X-API-Key-LLM`.
-
-#### 10.3.10 `GET /api/v1/sessions/{session_id}` — Obter sessao
+#### 10.3.3 `GET /api/v1/sessions/{session_id}` — Obter sessao
 
 **O que faz.** Devolve o estado da sessão.
 
@@ -2560,7 +2167,7 @@ curl -X GET "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443" \
 |---|---|
 | `closed_at` | Preenchido quando a sessão é fechada. |
 
-#### 10.3.11 `GET /api/v1/sessions/{session_id}/executions` — Execucoes da sessao
+#### 10.3.4 `GET /api/v1/sessions/{session_id}/executions` — Execucoes da sessao
 
 **O que faz.** Lista as execuções (mensagens processadas) da sessão.
 
@@ -2625,7 +2232,7 @@ curl -X GET "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/executio
 | `agents_invoked` | Agentes que atuaram. |
 | `tools_used` | Ferramentas chamadas. |
 
-#### 10.3.12 `GET /api/v1/executions/{execution_id}` — Obter execucao
+#### 10.3.5 `GET /api/v1/executions/{execution_id}` — Obter execucao
 
 **O que faz.** Detalha uma execução do Feedback Agent.
 
@@ -2690,57 +2297,7 @@ curl -X GET "$BASE/api/v1/executions/797d2dbf-c617-4a54-a932-1d4d83db9f5e" \
 |---|---|
 | `trigger_type` | `MANUAL` ou `SCHEDULED`. |
 
-#### 10.3.13 `POST /api/v1/executions/{execution_id}/resume` — Retomar execucao
-
-**O que faz.** Reprocessa uma execução interrompida usando a mensagem original.
-
-**Por que usar.** Recuperar uma mensagem que caiu no meio (falha de rede, reinício).
-
-**Quando / passo a passo.**
-1. Chame com o `execution_id` interrompido.
-2. A resposta segue o mesmo formato de uma mensagem.
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/executions/797d2dbf-c617-4a54-a932-1d4d83db9f5e/resume" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{}'
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "status": "CLARIFICATION_REQUIRED",
-  "agent": "router_agent",
-  "message": "Nao consegui entender completamente sua solicitacao. Pode me dar mais detalhes sobre o que voce precisa (por exemplo, se e uma duvida geral ou um problema com um dispositivo)?",
-  "sources": [],
-  "metadata": {
-    "execution_id": "797d2dbf-c617-4a54-a932-1d4d83db9f5e",
-    "confidence": 0.6,
-    "grounded_in_sources": null,
-    "grounding_score": null,
-    "grounding_reasoning": null,
-    "error_code": null,
-    "ticket_id": null
-  }
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| Checkpoint | Ponto salvo do grafo que permite retomar de onde parou. |
-
-#### 10.3.14 `POST /api/v1/sessions/{session_id}/close` — Fechar sessao
+#### 10.3.6 `POST /api/v1/sessions/{session_id}/close` — Fechar sessao
 
 **O que faz.** Encerra a conversa.
 
@@ -2779,453 +2336,7 @@ curl -X POST "$BASE/api/v1/sessions/9a06590a-083a-42cc-85a8-fcf02b524443/close" 
 |---|---|
 | `status: closed` | Sessão encerrada. |
 
-#### 10.3.15 `GET /api/v1/agents` — Listar agentes
-
-**O que faz.** Lista os agentes do sistema e o que cada um faz.
-
-**Por que usar.** Descobrir capacidades disponíveis.
-
-**Quando / passo a passo.**
-1. Chame a rota.
-
-**Requisição**
-
-```bash
-curl -X GET "$BASE/api/v1/agents" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN"
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-[
-  {
-    "name": "router_agent",
-    "description": "Ponto de entrada logico -- classifica intencao e decide roteamento.",
-    "version": "1",
-    "status": "enabled",
-    "capabilities": [
-      "routing"
-    ]
-  },
-  {
-    "name": "knowledge_agent",
-    "description": "Responde duvidas via RAG e busca semantica vetorizada.",
-    "version": "1",
-    "status": "enabled",
-    "capabilities": [
-      "KNOWLEDGE"
-    ]
-  },
-  "... (+1 itens)"
-]
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `capabilities` | Intenções que o agente atende. |
-
-#### 10.3.16 `GET /api/v1/agents/knowledge_agent` — Obter agente
-
-**O que faz.** Detalha um agente pelo nome.
-
-**Por que usar.** Conferir versão/estado de um agente.
-
-**Quando / passo a passo.**
-1. Chame com o nome (`knowledge_agent`).
-
-**Requisição**
-
-```bash
-curl -X GET "$BASE/api/v1/agents/knowledge_agent" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN"
-```
-
-**Resposta** — `200 OK` (real)
-
-```json
-{
-  "name": "knowledge_agent",
-  "description": "Responde duvidas via RAG e busca semantica vetorizada.",
-  "version": "1",
-  "status": "enabled",
-  "capabilities": [
-    "KNOWLEDGE"
-  ]
-}
-```
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `version` | Versão do agente. |
-
-### 10.4 Pasta 03 — Suporte guiado e chamados (tickets)
-
-**O que é.** O atendimento de um **problema**: o agente entende (pergunta se estiver vago), passa o passo a passo, confirma se resolveu e, se não resolver, abre um **chamado** com tudo validado. A API de chamados permite consultar o que foi aberto.
-
-**Por que existe.** Evitar dois erros comuns: escalar sem ter entendido o problema e abrir chamado vazio. O atendente humano recebe o pacote completo (cliente, conversa, análise prévia da IA, solução tentada, motivo).
-
-**Requisições da pasta**
-
-| # | Requisição | O que faz | Por que usar |
-|---|---|---|---|
-| 10.4.1 | `POST /api/v1/sessions` | Abre uma sessão só para o cenário de suporte guiado. | Separar o exemplo de suporte da conversa de dúvidas das outras pastas. |
-| 10.4.2 | `POST /api/v1/sessions/{support_session_id}/messages` | Mensagem sem sintoma concreto. | Mostra que o agente **entende antes de agir**: não busca solução nem abre chamado. |
-| 10.4.3 | `POST /api/v1/sessions/{support_session_id}/messages` | O cliente informa o código de erro. O agente busca o passo a passo (base e páginas de ajuda) e pergunta se de… | É o autoatendimento com confirmação: "Tente fazer isso: … Deu certo?". |
-| 10.4.4 | `POST /api/v1/sessions/{support_session_id}/messages` | O cliente diz que não resolveu; o agente abre o chamado e devolve o número. | Fechar o ciclo: nada de "vou encaminhar" sem número e sem contexto. |
-| 10.4.5 | `GET /api/v1/tickets` | Lista os chamados (mais recentes primeiro). | Acompanhar o que foi aberto por um cliente. |
-| 10.4.6 | `GET /api/v1/tickets/{ticket_id}` | Devolve o chamado completo. | É o que o atendente humano lê: cliente, conversa mascarada, análise prévia da IA e motivo. |
-
-**Passo a passo da pasta**
-
-1. `Criar sessão de suporte` → guarda `support_session_id`.
-2. `Suporte 1`: mensagem vaga → o agente **pergunta** e não abre chamado.
-3. `Suporte 2`: o cliente informa o erro → o agente devolve o passo a passo e pergunta "Deu certo?".
-4. `Suporte 3`: "não deu certo" → chamado aberto; o número vem em `metadata.ticket_id` (guardado em `ticket_id`).
-5. `Chamados - listar` e `Chamados - obter` para conferir o que foi registrado.
-
-**Glossário da pasta**
-
-| Termo | Significado |
-|---|---|
-| Caso de suporte | Estado do atendimento de um problema na sessão: `COLLECTING_INFO`, `AWAITING_CONFIRMATION`, `RESOLVED`, `TICKET_OPENED`, `NEEDS_CENTRAL`, `SUPERSEDED`. |
-| Chamado (`ticket_id`) | Registro para o atendimento humano; o número tem o formato `TKT-000001`. |
-| `reason` | Motivo do chamado: `NOT_RESOLVED`, `NO_SOLUTION_FOUND`, `CUSTOMER_REQUESTED_HUMAN`, `VALIDATION_FAILED`. |
-| `analysis.validated` | Itens conferidos antes de abrir: cliente identificado, problema entendido, conversa registrada, solução indicada / busca realizada. |
-| `analysis.handoff_note` | Resumo pronto para o atendente. |
-
-#### 10.4.1 `POST /api/v1/sessions` — Criar sessao de suporte
-
-**O que faz.** Abre uma sessão só para o cenário de suporte guiado.
-
-**Por que usar.** Separar o exemplo de suporte da conversa de dúvidas das outras pastas.
-
-**Quando / passo a passo.**
-1. Chame a rota; guarde `support_session_id`.
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions" \
-  -H "X-Channel: web" \
-  -H "X-User-Id: u-demo" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN"
-```
-
-**Resposta** — `200 OK` (real)
-
-```json
-{
-  "session_id": "fce70845-9cc5-4abb-9e2d-c1819219666b",
-  "user_id": "u-demo",
-  "status": "open",
-  "created_at": "2026-09-20T19:14:17.259842Z",
-  "updated_at": "2026-09-20T19:14:17.259848Z",
-  "closed_at": null,
-  "channel": "web",
-  "last_execution_id": null
-}
-```
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `support_session_id` | Sessão do cenário de suporte. |
-
-#### 10.4.2 `POST /api/v1/sessions/{support_session_id}/messages` — Suporte 1 - problema vago (o agente PERGUNTA)
-
-**O que faz.** Mensagem sem sintoma concreto.
-
-**Por que usar.** Mostra que o agente **entende antes de agir**: não busca solução nem abre chamado.
-
-**Quando / passo a passo.**
-1. Envie a mensagem vaga.
-2. Espere `status: CLARIFICATION_REQUIRED` e `ticket_id: null`.
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions/fce70845-9cc5-4abb-9e2d-c1819219666b/messages" \
-  -H "X-Session-Id: fce70845-9cc5-4abb-9e2d-c1819219666b" \
-  -H "X-User-Id: u-demo" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{"message": "preciso de ajuda com minha maquininha"}'
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "status": "CLARIFICATION_REQUIRED",
-  "agent": "customer_support_agent",
-  "message": "Qual é o problema ou a mensagem de erro que aparece na tela da maquininha?",
-  "sources": [],
-  "metadata": {
-    "execution_id": "2446e32e-06a3-4037-9319-c08657761ca3",
-    "confidence": 0.8,
-    "grounded_in_sources": null,
-    "grounding_score": null,
-    "grounding_reasoning": "Nao avaliado: a resposta tem status CLARIFICATION_REQUIRED (procedural) e nao contem conteudo substantivo para avaliar.",
-    "error_code": null,
-    "ticket_id": null
-  }
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `CLARIFICATION_REQUIRED` | O agente fez uma pergunta e aguarda a resposta. |
-
-> Requer `X-API-Key-LLM`.
-
-#### 10.4.3 `POST /api/v1/sessions/{support_session_id}/messages` — Suporte 2 - erro informado (o agente passa o passo a passo)
-
-**O que faz.** O cliente informa o código de erro. O agente busca o passo a passo (base e páginas de ajuda) e pergunta se deu certo.
-
-**Por que usar.** É o autoatendimento com confirmação: "Tente fazer isso: … Deu certo?".
-
-**Quando / passo a passo.**
-1. Envie o erro (ex.: `Erro ADQ 4-83`).
-2. Leia `sources` (páginas de origem) e a pergunta "Deu certo?".
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions/fce70845-9cc5-4abb-9e2d-c1819219666b/messages" \
-  -H "X-Session-Id: fce70845-9cc5-4abb-9e2d-c1819219666b" \
-  -H "X-User-Id: u-demo" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{"message": "estou com o Erro ADQ 4-83: erro de integracao com as bandeiras"}'
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "status": "OK",
-  "agent": "customer_support_agent",
-  "message": "Entendi: maquininha exibindo o erro ADQ 4-83.\n\nTente fazer isso:\n\nErro ADQ 4-83: erro de integração com as bandeiras. Siga os passos abaixo para resolver:\n1) Toque na tecla de Função.\n2) Digite o número 38.\n3) A tela ficará verde confirmando a ação.\n4) Selecione a opção: Inicialização.\n5) A tela ficará verde confirmando a ação, novamente.\n6) Em seguida, faça uma venda teste.\n\nDeu certo? Se nao resolver, e so me avisar que eu abro um chamado com tudo o que voce me contou para o nosso atendimento.",
-  "sources": [
-    {
-      "document_id": "59d18470-adb5-4da6-8dc6-555640bc9805",
-      "chunk_id": "35013d27-19c9-41c9-8099-07812e2c4f0f",
-      "score": 0.680235619001858,
-      "url": "https://site.getnet.com.br/get-ajuda-erros-maquininha/erro-adq-4-83/"
-    },
-    "... (+4 fontes)"
-  ],
-  "metadata": {
-    "execution_id": "4eb43d07-3c95-4855-89c3-6e68f87ff1b2",
-    "confidence": 0.680235619001858,
-    "grounded_in_sources": true,
-    "grounding_score": 5,
-    "grounding_reasoning": "A resposta reproduz fielmente os passos da solução no contexto para o erro ADQ 4-83 e não adiciona afirmações não suportadas.",
-    "error_code": null,
-    "ticket_id": null
-  }
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `sources[].url` | Página oficial de onde veio o passo a passo. |
-
-> Requer `X-API-Key-LLM`. O caso fica `AWAITING_CONFIRMATION`.
-
-#### 10.4.4 `POST /api/v1/sessions/{support_session_id}/messages` — Suporte 3 - nao deu certo (abre o chamado)
-
-**O que faz.** O cliente diz que não resolveu; o agente abre o chamado e devolve o número.
-
-**Por que usar.** Fechar o ciclo: nada de "vou encaminhar" sem número e sem contexto.
-
-**Quando / passo a passo.**
-1. Envie "nao deu certo".
-2. Guarde `metadata.ticket_id`.
-
-**Requisição**
-
-```bash
-curl -X POST "$BASE/api/v1/sessions/fce70845-9cc5-4abb-9e2d-c1819219666b/messages" \
-  -H "X-Session-Id: fce70845-9cc5-4abb-9e2d-c1819219666b" \
-  -H "X-User-Id: u-demo" \
-  -H "X-API-Key-LLM: $LLM_KEY" \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
-  -d '{"message": "nao deu certo"}'
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "status": "ESCALATION_REQUIRED",
-  "agent": "customer_support_agent",
-  "message": "Entendi, sinto muito que nao tenha resolvido. Abri o chamado **TKT-000003** com tudo o que voce me contou e o que ja tentamos, para a nossa equipe te ajudar sem voce precisar repetir nada. Guarde esse numero e aguarde o retorno do atendimento.",
-  "sources": [],
-  "metadata": {
-    "execution_id": "f35d0bfa-f593-43a9-a35f-012c2aaf0ad9",
-    "confidence": 0.8,
-    "grounded_in_sources": null,
-    "grounding_score": null,
-    "grounding_reasoning": "Nao avaliado: a resposta tem status ESCALATION_REQUIRED (procedural) e nao contem conteudo substantivo para avaliar.",
-    "error_code": null,
-    "ticket_id": "TKT-000003"
-  }
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `metadata.ticket_id` | Número do chamado (`TKT-000001`). |
-| `ESCALATION_REQUIRED` | Encaminhado ao atendimento humano. |
-
-> Interpretação do "deu certo?" é feita por código para respostas óbvias; as ambíguas vão à LLM.
-
-#### 10.4.5 `GET /api/v1/tickets` — Chamados - listar (por cliente)
-
-**O que faz.** Lista os chamados (mais recentes primeiro).
-
-**Por que usar.** Acompanhar o que foi aberto por um cliente.
-
-**Quando / passo a passo.**
-1. Chame com `user_id`, `status`, `limit`.
-
-**Requisição**
-
-```bash
-curl -X GET "$BASE/api/v1/tickets?user_id=u-demo&limit=20" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN"
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-[
-  {
-    "ticket_id": "TKT-000003",
-    "case_id": "4b3e07ff-c08e-432e-a2e4-117e86a38042",
-    "status": "OPEN",
-    "reason": "NOT_RESOLVED",
-    "subject": "maquininha exibindo o erro ADQ 4-83.",
-    "customer": "{...}",
-    "conversation": [
-      "..."
-    ],
-    "analysis": "{...}",
-    "execution_id": "f35d0bfa-f593-43a9-a35f-012c2aaf0ad9",
-    "created_at": "2026-09-20T19:14:36.397330Z"
-  },
-  "... (+2 itens)"
-]
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `status` | `OPEN`, `IN_PROGRESS`, `CLOSED`. |
-
-#### 10.4.6 `GET /api/v1/tickets/{ticket_id}` — Chamados - obter (pacote completo para o atendente)
-
-**O que faz.** Devolve o chamado completo.
-
-**Por que usar.** É o que o atendente humano lê: cliente, conversa mascarada, análise prévia da IA e motivo.
-
-**Quando / passo a passo.**
-1. Chame com o número (`TKT-000001`, sem diferenciar maiúsculas).
-
-**Requisição**
-
-```bash
-curl -X GET "$BASE/api/v1/tickets/TKT-000003" \
-  -H "X-Internal-Service-Token: $INTERNAL_TOKEN"
-```
-
-**Resposta** — `200 OK` (real, abreviada)
-
-<details><summary>Ver resposta</summary>
-
-```json
-{
-  "ticket_id": "TKT-000003",
-  "case_id": "4b3e07ff-c08e-432e-a2e4-117e86a38042",
-  "status": "OPEN",
-  "reason": "NOT_RESOLVED",
-  "subject": "maquininha exibindo o erro ADQ 4-83.",
-  "customer": {
-    "user_id": "u-demo",
-    "session_id": "fce70845-9cc5-4abb-9e2d-c1819219666b",
-    "channel": "web"
-  },
-  "conversation": [
-    "{...}",
-    "... (+4 itens)"
-  ],
-  "analysis": {
-    "problem_summary": "maquininha exibindo o erro ADQ 4-83.",
-    "category": "device_error",
-    "error_code": "ADQ 4-83",
-    "clarifications_asked": 1,
-    "solutions_tried": [
-      "..."
-    ],
-    "reason": "NOT_RESOLVED",
-    "handoff_note": "Motivo: o cliente informou que a solucao indicada nao resolveu. Problema entendido: maquin…",
-    "validated": [
-      "..."
-    ]
-  },
-  "execution_id": "f35d0bfa-f593-43a9-a35f-012c2aaf0ad9",
-  "created_at": "2026-09-20T19:14:36.397330Z"
-}
-```
-
-</details>
-
-**Glossário deste endpoint**
-
-| Termo | Significado |
-|---|---|
-| `conversation` | O que foi dito (cliente e assistente), mascarado. |
-| `analysis.solutions_tried` | Soluções já indicadas ao cliente, com as páginas de origem. |
-| `analysis.validated` | O que foi conferido antes de abrir. |
-
-### 10.5 Pasta 04 — Fontes web homologadas
+### 10.4 Pasta 03 — Fontes web homologadas
 
 **O que é.** Cadastrar, listar, testar, ligar/desligar as páginas que o agente pode consultar.
 
@@ -3237,12 +2348,12 @@ curl -X GET "$BASE/api/v1/tickets/TKT-000003" \
 
 | # | Requisição | O que faz | Por que usar |
 |---|---|---|---|
-| 10.5.1 | `GET /api/v1/web-sources` | Lista todas as fontes (51 de fábrica). | Ver onde o agente pode procurar. |
-| 10.5.2 | `POST /api/v1/web-sources` | Cadastra um novo site/página. | Ampliar o conhecimento do agente sem redeploy. |
-| 10.5.3 | `GET /api/v1/web-sources/{web_source_id}` | Detalha uma fonte. | Conferir descrição e estatísticas. |
-| 10.5.4 | `PUT /api/v1/web-sources/{web_source_id}` | Altera uma fonte (inclusive `enabled`). | Desligar uma fonte ruim sem apagá-la. |
-| 10.5.5 | `POST /api/v1/web-sources/{web_source_id}/test` | Acessa a página e mostra o que o agente leria. | Validar a fonte antes de usar. |
-| 10.5.6 | `DELETE /api/v1/web-sources/{web_source_id}` | Remove a fonte web. | Limpar o ambiente após os testes. |
+| 10.4.1 | `GET /api/v1/web-sources` | Lista todas as fontes (51 de fábrica). | Ver onde o agente pode procurar. |
+| 10.4.2 | `POST /api/v1/web-sources` | Cadastra um novo site/página. | Ampliar o conhecimento do agente sem redeploy. |
+| 10.4.3 | `GET /api/v1/web-sources/{web_source_id}` | Detalha uma fonte. | Conferir descrição e estatísticas. |
+| 10.4.4 | `PUT /api/v1/web-sources/{web_source_id}` | Altera uma fonte (inclusive `enabled`). | Desligar uma fonte ruim sem apagá-la. |
+| 10.4.5 | `POST /api/v1/web-sources/{web_source_id}/test` | Acessa a página e mostra o que o agente leria. | Validar a fonte antes de usar. |
+| 10.4.6 | `DELETE /api/v1/web-sources/{web_source_id}` | Remove a fonte web. | Limpar o ambiente após os testes. |
 
 **Passo a passo da pasta**
 
@@ -3262,7 +2373,7 @@ curl -X GET "$BASE/api/v1/tickets/TKT-000003" \
 | `consulted_count` / `useful_count` | Estatísticas de uso: quantas vezes foi consultada e quantas trouxe trechos úteis. |
 | SSRF | Ataque em que o servidor é induzido a acessar endereços internos; a API só aceita hosts públicos (portas 80/443). |
 
-#### 10.5.1 `GET /api/v1/web-sources` — Listar fontes web
+#### 10.4.1 `GET /api/v1/web-sources` — Listar fontes web
 
 **O que faz.** Lista todas as fontes (51 de fábrica).
 
@@ -3324,7 +2435,7 @@ curl -X GET "$BASE/api/v1/web-sources" \
 | `enabled` | Se o agente pode usá-la. |
 | `consulted_count` / `useful_count` | Uso e utilidade. |
 
-#### 10.5.2 `POST /api/v1/web-sources` — Cadastrar fonte web
+#### 10.4.2 `POST /api/v1/web-sources` — Cadastrar fonte web
 
 **O que faz.** Cadastra um novo site/página.
 
@@ -3384,7 +2495,7 @@ curl -X POST "$BASE/api/v1/web-sources" \
 | `consulted_count` / `useful_count` | Uso e utilidade. |
 | `409` | A URL já está cadastrada. |
 
-#### 10.5.3 `GET /api/v1/web-sources/{web_source_id}` — Obter fonte web
+#### 10.4.3 `GET /api/v1/web-sources/{web_source_id}` — Obter fonte web
 
 **O que faz.** Detalha uma fonte.
 
@@ -3440,7 +2551,7 @@ curl -X GET "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0" \
 | `enabled` | Se o agente pode usá-la. |
 | `consulted_count` / `useful_count` | Uso e utilidade. |
 
-#### 10.5.4 `PUT /api/v1/web-sources/{web_source_id}` — Atualizar / habilitar-desabilitar fonte
+#### 10.4.4 `PUT /api/v1/web-sources/{web_source_id}` — Atualizar / habilitar-desabilitar fonte
 
 **O que faz.** Altera uma fonte (inclusive `enabled`).
 
@@ -3498,7 +2609,7 @@ curl -X PUT "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0" \
 | `enabled` | Se o agente pode usá-la. |
 | `consulted_count` / `useful_count` | Uso e utilidade. |
 
-#### 10.5.5 `POST /api/v1/web-sources/{web_source_id}/test` — Testar fonte web (o que o agente leria)
+#### 10.4.5 `POST /api/v1/web-sources/{web_source_id}/test` — Testar fonte web (o que o agente leria)
 
 **O que faz.** Acessa a página e mostra o que o agente leria.
 
@@ -3540,7 +2651,7 @@ curl -X POST "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0/test
 | `links_found` | Links do mesmo site encontrados. |
 | `preview` | Início do texto. |
 
-#### 10.5.6 `DELETE /api/v1/web-sources/{web_source_id}` — Remover fonte web
+#### 10.4.6 `DELETE /api/v1/web-sources/{web_source_id}` — Remover fonte web
 
 **O que faz.** Remove a fonte web.
 
@@ -3570,7 +2681,7 @@ curl -X DELETE "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0" \
 |---|---|
 | `status: OK` | Removido. |
 
-### 10.6 Pasta 05 — Auditoria (fluxo do agente por sessão)
+### 10.5 Pasta 04 — Auditoria (fluxo do agente por sessão)
 
 **O que é.** Explicar, em português, por que o agente respondeu o que respondeu: rota, base × web, skills/playbooks, grounding, chamado.
 
@@ -3582,10 +2693,10 @@ curl -X DELETE "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0" \
 
 | # | Requisição | O que faz | Por que usar |
 |---|---|---|---|
-| 10.6.1 | `GET /api/v1/audit/sessions/{session_id}` | Devolve todos os turnos da sessão com explicação, linha do tempo e resumo. | Entender por que o agente respondeu ou fez algo. |
-| 10.6.2 | `GET /api/v1/audit/sessions/{session_id}` | Igual à anterior, sem os prompts/saídas do modelo (`include_llm=false`). | Resposta menor quando só interessa o fluxo. |
-| 10.6.3 | `GET /api/v1/audit/executions/{execution_id}` | Auditoria de uma mensagem específica. | Ir direto ao turno problemático. |
-| 10.6.4 | `GET /api/v1/audit/sessions/{session_id}/events` | Lista os eventos brutos, com filtro por tipo. | Filtrar, p.ex., só as chamadas de ferramenta. |
+| 10.5.1 | `GET /api/v1/audit/sessions/{session_id}` | Devolve todos os turnos da sessão com explicação, linha do tempo e resumo. | Entender por que o agente respondeu ou fez algo. |
+| 10.5.2 | `GET /api/v1/audit/sessions/{session_id}` | Igual à anterior, sem os prompts/saídas do modelo (`include_llm=false`). | Resposta menor quando só interessa o fluxo. |
+| 10.5.3 | `GET /api/v1/audit/executions/{execution_id}` | Auditoria de uma mensagem específica. | Ir direto ao turno problemático. |
+| 10.5.4 | `GET /api/v1/audit/sessions/{session_id}/events` | Lista os eventos brutos, com filtro por tipo. | Filtrar, p.ex., só as chamadas de ferramenta. |
 
 **Passo a passo da pasta**
 
@@ -3604,7 +2715,7 @@ curl -X DELETE "$BASE/api/v1/web-sources/2ee6aaa4-dbb3-4fbf-b05e-a790a8bd72c0" \
 | `summary` | Resumo do turno: rota escolhida, agentes, ferramentas, chamadas e tokens do modelo. |
 | Mascaramento | Substituição de dados sensíveis (ex.: `[CARTAO]`) antes de gravar/mostrar. |
 
-#### 10.6.1 `GET /api/v1/audit/sessions/{session_id}` — Auditoria da sessao (fluxo completo + por que)
+#### 10.5.1 `GET /api/v1/audit/sessions/{session_id}` — Auditoria da sessao (fluxo completo + por que)
 
 **O que faz.** Devolve todos os turnos da sessão com explicação, linha do tempo e resumo.
 
@@ -3795,7 +2906,7 @@ curl -X GET "$BASE/api/v1/audit/sessions/9a06590a-083a-42cc-85a8-fcf02b524443" \
 | `timeline` | Eventos em ordem. |
 | `summary` | Rota, agentes, ferramentas e tokens. |
 
-#### 10.6.2 `GET /api/v1/audit/sessions/{session_id}` — Auditoria da sessao (sem prompts dos modelos)
+#### 10.5.2 `GET /api/v1/audit/sessions/{session_id}` — Auditoria da sessao (sem prompts dos modelos)
 
 **O que faz.** Igual à anterior, sem os prompts/saídas do modelo (`include_llm=false`).
 
@@ -3983,7 +3094,7 @@ curl -X GET "$BASE/api/v1/audit/sessions/9a06590a-083a-42cc-85a8-fcf02b524443?in
 |---|---|
 | `include_llm` | Inclui (`true`) ou omite (`false`) os prompts do modelo. |
 
-#### 10.6.3 `GET /api/v1/audit/executions/{execution_id}` — Auditoria de um turno (execution_id)
+#### 10.5.3 `GET /api/v1/audit/executions/{execution_id}` — Auditoria de um turno (execution_id)
 
 **O que faz.** Auditoria de uma mensagem específica.
 
@@ -4078,7 +3189,7 @@ curl -X GET "$BASE/api/v1/audit/executions/797d2dbf-c617-4a54-a932-1d4d83db9f5e"
 
 </details>
 
-#### 10.6.4 `GET /api/v1/audit/sessions/{session_id}/events` — Eventos brutos da sessao (filtro por tipo)
+#### 10.5.4 `GET /api/v1/audit/sessions/{session_id}/events` — Eventos brutos da sessao (filtro por tipo)
 
 **O que faz.** Lista os eventos brutos, com filtro por tipo.
 
