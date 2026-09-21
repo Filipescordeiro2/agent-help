@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     # publico.
     web_access_enabled: bool = True
     web_allowed_domains: str = ""
+    # Homologacao: o agente so consulta URLs de fontes web CADASTRADAS e habilitadas. Um link que o
+    # cliente cola na mensagem so e lido se for uma dessas paginas; qualquer outro e ignorado (e o
+    # cliente e avisado com gentileza). Desligar so faz sentido em ambiente de teste/experimento.
+    web_only_registered_urls: bool = True
+    web_url_not_homologated_note: str = (
+        "Por segurança, eu só consulto páginas oficiais homologadas da Getnet, então não abri o "
+        "link que você enviou."
+    )
     web_fetch_timeout_seconds: float = Field(default=20.0, gt=0)
     web_max_bytes: int = Field(default=2_000_000, gt=0)
     web_max_chars: int = Field(default=60_000, gt=0)

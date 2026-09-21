@@ -203,11 +203,20 @@ def build_explanation(events: list[AuditEvent]) -> list[str]:
                 f"A base de conhecimento NAO tinha resposta (nenhum trecho com similaridade >= "
                 f"{_fmt_score(kb.get('min_score'))})."
             )
+        if web.get("blocked_urls"):
+            shown = ", ".join(web["blocked_urls"])
+            lines.append(
+                f"O cliente enviou link(s) que NAO sao de fontes homologadas ({shown}): NAO foram "
+                "consultados. O agente so le paginas de fontes web cadastradas; o cliente foi "
+                "avisado com gentileza."
+            )
         if web.get("attempted"):
             consulted = web.get("consulted", [])
             if not consulted:
                 lines.append("Nao havia URL na mensagem nem fonte web habilitada para consultar.")
             for entry in consulted:
+                if entry.get("status") == "WEB_URL_NOT_HOMOLOGATED":
+                    continue  # ja explicado acima
                 name = entry.get("source_name") or "URL da mensagem"
                 if entry.get("status") != "ok":
                     lines.append(

@@ -19,6 +19,7 @@ from app.config.settings import get_settings
 from app.llm.structured_output import get_structured_output
 from app.observability.trace import emit_trace
 from app.rag.loaders.web import error_codes, extract_urls, strip_urls
+from app.rag.web_context import blocked_message_urls
 from app.schemas.agent_response import AgentResponse, Status
 from app.schemas.common import ResponseMetadata, SourceRef
 from app.security.policies import wrap_untrusted_content
@@ -53,6 +54,9 @@ class KnowledgeAgent(Agent):
         settings = get_settings()
         message = state["user_message"].message
         execution_id = state["execution_id"]
+
+        # Homologacao: links da mensagem que nao sao de fontes cadastradas nao serao consultados.
+        blocked_urls = await blocked_message_urls(self._db, message)
 
         # 1) A base semantica vem primeiro. URLs atrapalham a busca, entao saem da query.
         kb_query = strip_urls(message) or message
@@ -111,6 +115,7 @@ class KnowledgeAgent(Agent):
                     else None
                 ),
                 "urls_in_message": extract_urls(message, limit=5),
+                "blocked_urls": blocked_urls,
                 "consulted": web_result.consulted,
                 "errors": web_result.errors,
                 "saved_chunks": len(web_result.results),
@@ -127,7 +132,7 @@ class KnowledgeAgent(Agent):
             return AgentResponse(
                 status=Status.INSUFFICIENT_CONTEXT,
                 agent=self.name,
-                message=_no_information_message(web_result),
+                message=_no_information_message(web_result, blocked_urls),
                 sources=[],
                 metadata=ResponseMetadata(execution_id=execution_id, confidence=0.0),
             )
@@ -191,9 +196,16 @@ class KnowledgeAgent(Agent):
             KnowledgeAnswerDraft,
             [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": message},
+                {"role": "user", "content": kb_query if blocked_urls else message},
             ],
         )
+        answer = draft.message
+        if blocked_urls:
+            note = (
+                f"{settings.web_url_not_homologated_note} "
+                "Respondi com base nas nossas fontes oficiais."
+            )
+            answer = f"{answer.rstrip()}\n\n{note}"
 
         sources = [
             SourceRef(document_id=r["document_id"], chunk_id=r.get("chunk_id"), score=r["score"])
@@ -212,7 +224,7 @@ class KnowledgeAgent(Agent):
         return AgentResponse(
             status=Status.OK,
             agent=self.name,
-            message=draft.message,
+            message=answer,
             sources=sources,
             metadata=ResponseMetadata(
                 execution_id=execution_id,
@@ -244,11 +256,17 @@ class KnowledgeAgent(Agent):
             )
 
 
-def _no_information_message(web_result: WebSearchOutput) -> str:
+def _no_information_message(web_result: WebSearchOutput, blocked_urls: list[str]) -> str:
     """Nem a base nem a web tem a informacao: orienta a procurar a central de atendimento.
 
     Detalhes tecnicos (qual site falhou, por que) ficam so na auditoria, nao na resposta."""
-    contact = get_settings().support_contact_message
+    settings = get_settings()
+    contact = settings.support_contact_message
+    if blocked_urls:
+        return (
+            f"{settings.web_url_not_homologated_note} Se quiser, me conte a sua dúvida com as suas "
+            f"palavras que eu procuro nas nossas fontes oficiais. {contact}"
+        )
     link_failed = any(
         entry.get("source_id") is None and entry.get("status") != "ok"
         for entry in web_result.consulted

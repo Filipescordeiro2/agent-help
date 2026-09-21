@@ -86,6 +86,7 @@ def test_kb_miss_goes_to_the_site_and_saves_only_the_relevant_chunks(
     client: TestClient, fake_llm: dict, web: dict, test_db
 ) -> None:
     _knowledge_llm(fake_llm)
+    _add_source(client, URL)
 
     body = _ask(client, f"Segundo {URL} qual a taxa da maquininha?")
 
@@ -111,6 +112,7 @@ def test_second_question_is_answered_from_the_base_without_visiting_the_site(
     client: TestClient, fake_llm: dict, web: dict, test_db
 ) -> None:
     _knowledge_llm(fake_llm)
+    _add_source(client, URL)
     _ask(client, f"Segundo {URL} qual a taxa da maquininha?")
     assert web["fetches"] == 1
 
@@ -141,6 +143,7 @@ def test_repeating_the_question_does_not_duplicate_saved_chunks(
     client: TestClient, fake_llm: dict, web: dict, test_db, monkeypatch
 ) -> None:
     _knowledge_llm(fake_llm)
+    _add_source(client, URL)
     _ask(client, f"Segundo {URL} qual a taxa da maquininha?")
     first = _count(test_db, "knowledge_chunks")
     # reaplica a persistencia dos mesmos trechos: nada deve ser duplicado
@@ -157,9 +160,11 @@ def test_unreachable_page_returns_insufficient_context_with_the_reason(
     client: TestClient, fake_llm: dict, web: dict, test_db
 ) -> None:
     _knowledge_llm(fake_llm)
-    web["error"] = WebFetchError("WEB_URL_NOT_ALLOWED", "Endereco de rede nao permitido.")
+    down = "https://ajuda.exemplo.com/fora-do-ar"
+    _add_source(client, down)
+    web["error"] = WebFetchError("WEB_FETCH_FAILED", "Endereco de rede nao permitido.")
 
-    body = _ask(client, "Segundo http://10.0.0.5/admin qual a taxa da maquininha?")
+    body = _ask(client, f"Segundo {down} qual a taxa da maquininha?")
 
     assert body["status"] == Status.INSUFFICIENT_CONTEXT.value
     # ao cliente: so a orientacao (o motivo tecnico fica na auditoria)
@@ -248,6 +253,7 @@ def test_message_the_router_could_not_classify_still_reaches_the_web_flow(
 ) -> None:
     """O Router devolve 'esclarecimento', mas a URL na mensagem leva ao Knowledge Agent."""
     _knowledge_llm(fake_llm)
+    _add_source(client, URL)
     fake_llm[RouterDecision] = RouterDecision(
         intent=Intent.CLARIFICATION_REQUIRED,
         confidence=0.3,
@@ -413,6 +419,7 @@ def test_url_in_the_message_takes_priority_over_registered_sources(
     client: TestClient, fake_llm: dict, web: dict
 ) -> None:
     _knowledge_llm(fake_llm)
+    _add_source(client, URL)
     _add_source(client, SOURCE_B)
 
     body = _ask(client, f"Segundo {URL} qual a taxa da maquininha?")
@@ -425,6 +432,7 @@ def test_registered_sources_are_consulted_if_the_message_url_has_nothing_relevan
     client: TestClient, fake_llm: dict, web: dict
 ) -> None:
     _knowledge_llm(fake_llm)
+    _add_source(client, URL)
     _add_source(client, SOURCE_B)
     web["pages"][URL] = IRRELEVANT_PAGE
 

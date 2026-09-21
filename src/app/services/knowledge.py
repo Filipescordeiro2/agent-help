@@ -76,6 +76,7 @@ async def ingest_url(
             f"{strip_urls(query)} {url}",
             top_k=settings.knowledge_default_top_k,
             min_score=settings.web_min_score,
+            only_registered=False,  # ingestao deliberada de um operador, nao navegacao do agente
         )
         if not chunks:
             raise (

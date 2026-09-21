@@ -27,6 +27,7 @@ import uuid
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import structlog
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -49,7 +50,7 @@ from app.repository.knowledge_documents_repository import (
     KnowledgeDocument,
     KnowledgeDocumentsRepository,
 )
-from app.repository.web_sources_repository import WebSource
+from app.repository.web_sources_repository import WebSource, WebSourcesRepository, normalize_url
 
 logger = structlog.get_logger(__name__)
 
@@ -81,6 +82,45 @@ def _content_hash(text: str) -> str:
     return hashlib.sha256(text.strip().encode("utf-8")).hexdigest()
 
 
+_TRACKING_PARAMS = ("utm_", "gclid", "fbclid")
+
+
+def _comparable_url(url: str) -> str:
+    """Forma para comparar URLs: sem esquema (http = https), ancora, barra final e parametros de
+    rastreamento (utm_*, gclid, fbclid); host em minusculas."""
+    parts = urlsplit(url.strip())
+    kept = [
+        (key, value)
+        for key, value in parse_qsl(parts.query, keep_blank_values=True)
+        if not key.lower().startswith(_TRACKING_PARAMS)
+    ]
+    clean = parts._replace(query=urlencode(kept), fragment="")
+    return normalize_url(urlunsplit(clean)).split("://", 1)[-1]
+
+
+def is_homologated_url(url: str, sources: list[WebSource]) -> bool:
+    """A URL e a de uma fonte web cadastrada e habilitada (homologada)?"""
+    try:
+        target = _comparable_url(url)
+    except ValueError:
+        return False
+    return any(s.enabled and _comparable_url(s.url) == target for s in sources)
+
+
+async def blocked_message_urls(db: AsyncIOMotorDatabase, message: str) -> list[str]:
+    """URLs citadas na mensagem que NAO sao de fontes homologadas (nao serao consultadas).
+
+    Vazio quando a politica esta desligada (`WEB_ONLY_REGISTERED_URLS=false`)."""
+    settings = get_settings()
+    if not settings.web_only_registered_urls:
+        return []
+    urls = extract_urls(message, limit=settings.web_max_urls_per_message)
+    if not urls:
+        return []
+    registered = await WebSourcesRepository(db).list_enabled()
+    return [u for u in urls if not is_homologated_url(u, registered)]
+
+
 def rank_sources(question: str, sources: list[WebSource], limit: int) -> list[WebSource]:
     """Ate `limit` fontes: se cabem todas, todas (ordem de prioridade); senao as mais aderentes a
     pergunta (palavras em comum com nome/descricao/uso/temas, ponderadas pela raridade),
@@ -110,8 +150,12 @@ async def build_web_context(
     min_score: float,
     sources: list[WebSource] | None = None,
     report: list[dict] | None = None,
+    only_registered: bool | None = None,
 ) -> tuple[list[WebContextChunk], list[WebFetchError]]:
     """Trechos mais relevantes das paginas web para `query`. Retorna (chunks, erros).
+
+    `only_registered`: URLs da mensagem so valem se forem de fontes cadastradas (padrao:
+    `WEB_ONLY_REGISTERED_URLS`). A ingestao manual por um operador (`ingest-url`) passa `False`.
 
     `sources`: fontes cadastradas a consultar quando as URLs da propria pergunta nao trazem nada
     relevante. `report` (opcional) recebe um registro por pagina consultada -- fonte, status,
@@ -123,15 +167,34 @@ async def build_web_context(
     if not settings.web_access_enabled:
         return [], []
     urls = extract_urls(query, limit=settings.web_max_urls_per_message)
+    errors: list[WebFetchError] = []
+    entries = report if report is not None else []
+    enforce = settings.web_only_registered_urls if only_registered is None else only_registered
+    if enforce:
+        # Homologacao: link de fora da lista de fontes cadastradas nunca e acessado.
+        registered = [s for s in (sources or []) if s.enabled]
+        for blocked in [u for u in urls if not is_homologated_url(u, registered)]:
+            urls.remove(blocked)
+            errors.append(
+                WebFetchError("WEB_URL_NOT_HOMOLOGATED", "Link fora das fontes homologadas.")
+            )
+            entries.append(
+                {
+                    "url": blocked,
+                    "source_id": None,
+                    "source_name": None,
+                    "status": "WEB_URL_NOT_HOMOLOGATED",
+                    "relevant_chunks": 0,
+                    "followed_links": [],
+                }
+            )
     candidates = [s for s in (sources or []) if s.enabled and s.url not in urls]
     if not urls and not candidates:
-        return [], []
+        return [], errors
 
     # As proprias URLs diluiriam a similaridade: embeda so o texto da pergunta.
     question = strip_urls(query) or query
     query_embedding = await asyncio.to_thread(embed_text, question)
-    errors: list[WebFetchError] = []
-    entries = report if report is not None else []
 
     async def scored_chunks(url: str, title: str, text: str) -> list[WebContextChunk]:
         texts = split_text(text)[:_MAX_CHUNKS_PER_PAGE]

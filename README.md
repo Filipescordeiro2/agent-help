@@ -71,6 +71,7 @@ Abra o `.env`. Para o primeiro uso **você não precisa alterar nada**: os valor
 | `GROUNDING_MIN_SCORE` | `3` | Nota mínima (0–5) para uma resposta ser entregue ao cliente |
 | `AUTO_FEEDBACK_MAX_SCORE` | `3` | Notas de grounding de 0 até este valor viram *feedback* automático |
 | `WEB_MIN_SCORE` / `KNOWLEDGE_MIN_SCORE` | `0.60` | Similaridade mínima para um trecho ser considerado relevante |
+| `WEB_ONLY_REGISTERED_URLS` | `true` | O agente só lê páginas de **fontes web cadastradas**. Link colado pelo cliente que não seja uma delas é ignorado (com aviso gentil) |
 
 > **Onde fica a chave do OpenRouter?** **Não** fica no `.env`. Ela é enviada **a cada requisição** no cabeçalho `X-API-Key-LLM`. Assim você troca de chave sem reiniciar nem recompilar nada, e a chave nunca é gravada em disco, em log ou na auditoria.
 
@@ -443,7 +444,7 @@ Tudo o que foi usado na construção, agrupado pela função que cumpre.
 
 | Tecnologia | Uso |
 |---|---|
-| **pytest**, **pytest-asyncio** | 762 testes (unitários, integração, segurança, e2e, avaliação de roteamento); estratégia no capítulo 11 |
+| **pytest**, **pytest-asyncio** | 785 testes (unitários, integração, segurança, e2e, avaliação de roteamento); estratégia no capítulo 11 |
 | **mongomock-motor** | Banco simulado nos testes (rápido, sem servidor) |
 | **ruff**, **mypy** | Lint, formatação e tipagem |
 | **Postman** | Collection de atendimento (21 requisições) e ambiente para explorar e validar a API (capítulo 10) |
@@ -694,7 +695,7 @@ sequenceDiagram
 Regras do fluxo:
 
 1. **Base primeiro**, sempre. Só vai às páginas se a base não tem trecho acima do piso.
-2. Nas páginas: as **URLs citadas na mensagem** vêm primeiro; se nada relevante, as **fontes cadastradas** mais aderentes à pergunta (ranking por raiz de palavra e raridade — IDF — sobre nome, descrição, uso e temas), em **paralelo**. Se a página inicial não traz nada, segue até 2 links do **mesmo site** cujo texto combina com a pergunta.
+2. Nas páginas: as **URLs citadas na mensagem** só valem se forem de uma **fonte homologada** (as demais são ignoradas, veja 6.11) e vêm primeiro; se nada relevante, as **fontes cadastradas** mais aderentes à pergunta (ranking por raiz de palavra e raridade — IDF — sobre nome, descrição, uso e temas), em **paralelo**. Se a página inicial não traz nada, segue até 2 links do **mesmo site** cujo texto combina com a pergunta.
 3. **Salva só o relevante** (não o site inteiro), sem duplicar (hash do conteúdo), e registra estatísticas por fonte (`consulted_count`, `useful_count`, `last_status`).
 4. **Retentativa com web:** se o grounding reprova uma resposta feita **só** com a base, a segunda tentativa também consulta as páginas.
 5. Se ninguém sabe, a resposta é a **orientação à central de atendimento** (nada é inventado e nada é salvo).
@@ -834,7 +835,7 @@ Nenhuma defesa isolada basta; o projeto empilha camadas:
 | 6 | **Ferramentas com allowlist** | Cada ferramenta tem entrada/saída tipadas e *timeout*; ferramentas que alteram dados exigem autorização explícita; o modelo **não** controla a identidade nem a autorização |
 | 7 | **Scanner de saída** | Barra **valores** de segredo (chaves `sk-…`, `Bearer …`, senha revelada) e números de cartão (Luhn) — sem bloquear a palavra "senha", que é normal numa central de ajuda |
 | 8 | **Grounding** | Uma resposta sem sustentação nas fontes não é entregue |
-| 9 | **SSRF** | O leitor de páginas só acessa IP público, portas 80/443, sem credenciais na URL, com IP fixado e redirecionamentos revalidados; a navegação autônoma usa **só as fontes cadastradas**, e `WEB_ALLOWED_DOMAINS` restringe também os domínios de links colados pelo cliente |
+| 9 | **SSRF** | O leitor de páginas só acessa IP público, portas 80/443, sem credenciais na URL, com IP fixado e redirecionamentos revalidados; o agente lê **só páginas de fontes cadastradas e habilitadas**: um link colado pelo cliente que não seja uma delas **nunca é acessado** (`WEB_ONLY_REGISTERED_URLS`, ligado por padrão), e `WEB_ALLOWED_DOMAINS` restringe ainda os domínios |
 | 10 | **Segredos** | A chave do LLM vive só na requisição (nunca em arquivo, log ou auditoria); o pre-commit roda `detect-secrets` |
 | 11 | **Privacidade** | Cartão, CPF/CNPJ, e-mail, telefone e chaves são **mascarados** na auditoria, no feedback e no chamado |
 | 12 | **Limites** | Rate limit por usuário, limite de iterações do grafo, tamanho máximo de página e de mensagem |
@@ -863,7 +864,7 @@ Cada execução gera eventos em `audit_events` (dados sensíveis mascarados, tex
 
 ### 6.11 URLs homologadas (fontes web) e como cadastrar uma nova
 
-**Por que assim?** O agente **não navega livremente**: ele só lê páginas que a Getnet **homologou** (cadastradas com o que têm e quando usá-las). Isso evita respostas baseadas em conteúdo não oficial, reduz superfície de ataque (SSRF, conteúdo malicioso), permite medir a utilidade de cada fonte e torna cada resposta rastreável até uma URL conhecida. Ao consultar, o agente escolhe as fontes pela `description`, `usage` e `topics` — por isso cada fonte descreve **o que traz** e **quando usar**.
+**Por que assim?** O agente **não navega livremente**: ele só lê páginas que a Getnet **homologou** (cadastradas com o que têm e quando usá-las). Isso vale também para links colados pelo cliente. Isso evita respostas baseadas em conteúdo não oficial, reduz superfície de ataque (SSRF, conteúdo malicioso), permite medir a utilidade de cada fonte e torna cada resposta rastreável até uma URL conhecida. Ao consultar, o agente escolhe as fontes pela `description`, `usage` e `topics` — por isso cada fonte descreve **o que traz** e **quando usar**.
 
 Hoje há **51 fontes** (3 sites principais, 26 páginas da Central de Ajuda e 22 códigos de erro da maquininha), carregadas do YAML no boot:
 
@@ -1003,6 +1004,12 @@ Resposta real (`200 OK`):
 
 Para ela virar **padrão** do projeto (carregada em todo boot), crie ou edite um arquivo em `src/app/agent/definitions/web_sources/` com o mesmo formato do YAML acima e reinicie o app.
 
+**E se o cliente colar um link que não está cadastrado?** O agente **não abre**. O bloqueio é feito por código (o modelo nunca decide), comparando a URL com as das fontes habilitadas, sem diferenciar `http` de `https`, barra final, âncora (`#`) nem parâmetros de rastreamento (`utm_*`, `gclid`, `fbclid`). O cliente recebe uma resposta gentil e, quando as fontes oficiais têm a resposta, ela vem junto:
+
+> Por segurança, eu só consulto páginas oficiais homologadas da Getnet, então não abri o link que você enviou. Respondi com base nas nossas fontes oficiais.
+
+Se nem a base nem as fontes homologadas têm a informação, a resposta convida o cliente a contar a dúvida com as próprias palavras e indica a central de atendimento. A auditoria registra o link bloqueado ("NAO sao de fontes homologadas: NAO foram consultados"). A ingestão manual por um operador (`POST /api/v1/knowledge/ingest-url`) continua livre, porque é um ato deliberado com o token interno.
+
 Use `POST /api/v1/web-sources/{id}/test` para ver **o que o agente leria** (título, tamanho, prévia) antes de confiar na fonte, e `PUT` com `enabled: false` para desligar uma fonte sem apagá-la. Fontes cadastradas pela API vivem no banco (que nasce vazio); para torná-las padrão, coloque-as num YAML em `web_sources/`.
 
 ### 6.12 Memória
@@ -1053,7 +1060,7 @@ Uma **ferramenta** é uma capacidade que o agente pode exercer no mundo (buscar 
 | Ferramenta | Quem usa | O que faz | Quando |
 |---|---|---|---|
 | `search_knowledge` | Knowledge Agent | Busca semântica na base vetorial (piso `KNOWLEDGE_MIN_SCORE`, `top_k`, filtros de `product`/`region`) e devolve trechos com `score`, `document_id` e metadados | **Sempre primeiro** em toda dúvida |
-| `search_web_pages` | Knowledge Agent | Consulta as URLs citadas na mensagem e/ou as fontes homologadas mais aderentes (em paralelo), seleciona os trechos relevantes e **os salva** na base (`doc_type=web`) | Só quando a base **não** responde (ou na retentativa do grounding) |
+| `search_web_pages` | Knowledge Agent | Consulta as URLs citadas na mensagem **que sejam de fontes homologadas** e/ou as fontes homologadas mais aderentes (em paralelo), seleciona os trechos relevantes e **os salva** na base (`doc_type=web`) | Só quando a base **não** responde (ou na retentativa do grounding) |
 | `semantic_search_knowledge`, `search_product_documentation`, `search_faq`, `get_document_source`, `search_playbook` | Disponíveis para composição pelos agentes e pela API de busca (`/api/v1/search/*`) | Variações da busca sobre documentos, FAQ e playbooks | Sob demanda |
 
 ### 7.3 Ferramentas de suporte
@@ -3419,12 +3426,12 @@ Esta seção responde a duas perguntas: **qual é a estratégia geral de testes*
 
 ### 11.2 A pirâmide de testes (situação atual)
 
-`pytest` coleta **762 testes**: **761 passam** e 1 é ignorado de propósito (o cliente HTTP já recusa caracteres de controle em cabeçalhos). `ruff` roda limpo.
+`pytest` coleta **785 testes**: **784 passam** e 1 é ignorado de propósito (o cliente HTTP já recusa caracteres de controle em cabeçalhos). `ruff` roda limpo.
 
 | Camada | Pasta | Testes | O que valida | Dependências |
 |---|---|---|---|---|
 | **Unitária** | `tests/unit` | 459 | Regras puras e componentes isolados: schemas, scanners de segurança, redação de dados, divisão em *chunks*, ranking de fontes web, seleção de skills/playbooks, classificação de saudações e de "deu certo?", máquina de estados de propostas, política de retentativa do grounding, cliente OpenRouter, métricas, configuração | Nenhuma externa |
-| **Integração** | `tests/integration` | 245 | A API de ponta a ponta com o **grafo real**: cada rota, cada caminho do fluxo (11.3) | Mongo em memória + LLM/embeddings dublês |
+| **Integração** | `tests/integration` | 268 | A API de ponta a ponta com o **grafo real**: cada rota, cada caminho do fluxo (11.3) | Mongo em memória + LLM/embeddings dublês |
 | **Segurança** | `tests/security` | 51 | Vetores de ataque e garantias de não fabricação (11.4) | Idem |
 | **E2E** | `tests/e2e` | 6 | Jornadas completas: pergunta → resposta fundamentada; problema → chamado rastreável; feedback → proposta → aprovação humana → playbook real | Idem |
 | **Avaliação** | `tests/evaluation` | 1 | Acurácia de roteamento sobre um conjunto rotulado (mínimo 90%). Valida o **mecanismo** de avaliação; a medição com o modelo real é uma execução separada (11.5) | Classificador heurístico no lugar do LLM |
@@ -3459,13 +3466,13 @@ first = client.post(f"/api/v1/sessions/{session_id}/messages",
 assert "Contexto recente da conversa" in system_prompt
 ```
 
-**O que os 245 testes de integração cobrem** (agrupados por tema; cada um é um ou mais arquivos em `tests/integration`):
+**O que os 268 testes de integração cobrem** (agrupados por tema; cada um é um ou mais arquivos em `tests/integration`):
 
 | Tema | Cenários verificados |
 |---|---|
 | **Contrato da API** | Formato de `AgentResponse` em todas as rotas de mensagem; documentação OpenAPI; identidade por cabeçalhos (`X-User-Id`, `X-Session-Id`), divergência de identidade e ausência de cabeçalho; chave do modelo obrigatória e mapeamento de erros do provedor (401, 402, indisponibilidade); limite de requisições |
 | **Roteamento** | Intenções do Router, esclarecimento, multiagente em sequência, guardas por código (URL, código de erro, pedido de atendente) |
-| **RAG e web** | Base primeiro; consulta às páginas quando a base não responde; só trechos relevantes são salvos; reuso na segunda pergunta; guarda de código de erro (não aceitar trecho de outro código); retentativa com a web quando o grounding reprova |
+| **RAG e web** | Base primeiro; consulta às páginas quando a base não responde; só trechos relevantes são salvos; reuso na segunda pergunta; guarda de código de erro (não aceitar trecho de outro código); **homologação de URLs** (link fora das fontes cadastradas nunca é aberto, com mensagem gentil); retentativa com a web quando o grounding reprova |
 | **Grounding** | Aprovação, reprovação, retentativa, falha do avaliador escala (nunca entrega sem validar); casos multiagente |
 | **Suporte guiado** | 32 cenários da máquina de estados: pergunta quando vago, passo a passo, "deu certo" / "não deu certo", limite de perguntas, "quero atendente" antes de entender, idempotência do chamado, **trava de completude** (não abre chamado incompleto) |
 | **Feedback** | Feedback manual e automático (nota 0–3), Feedback Agent, propostas, aprovação/rejeição, **nada é aplicado sem aprovação humana** |
