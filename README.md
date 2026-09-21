@@ -1010,6 +1010,8 @@ Para ela virar **padrão** do projeto (carregada em todo boot), crie ou edite um
 
 Se nem a base nem as fontes homologadas têm a informação, a resposta convida o cliente a contar a dúvida com as próprias palavras e indica a central de atendimento. A auditoria registra o link bloqueado ("NAO sao de fontes homologadas: NAO foram consultados"). A ingestão manual por um operador (`POST /api/v1/knowledge/ingest-url`) continua livre, porque é um ato deliberado com o token interno.
 
+Há um **exemplo real** disso no capítulo 9 (9.2.8): o cliente cola o link de um site de terceiros, com parâmetros de rastreamento, e o agente não o abre.
+
 Use `POST /api/v1/web-sources/{id}/test` para ver **o que o agente leria** (título, tamanho, prévia) antes de confiar na fonte, e `PUT` com `enabled: false` para desligar uma fonte sem apagá-la. Fontes cadastradas pela API vivem no banco (que nasce vazio); para torná-las padrão, coloque-as num YAML em `web_sources/`.
 
 ### 6.12 Memória
@@ -1658,6 +1660,59 @@ curl -X POST "$BASE/api/v1/sessions/<session_id>/messages" \
 **O que o agente fez.** O nó de segurança detectou o padrão de *prompt injection*, **bloqueou** a mensagem e nenhum agente nem o modelo foram acionados (`PROMPT_INJECTION_DETECTED`). A auditoria registra: *"A entrada foi BLOQUEADA pela verificação de segurança; nenhum agente foi acionado."*
 
 **Por que é assim.** A defesa mais barata e mais segura é não deixar a instrução maliciosa chegar ao modelo (camadas em 6.9).
+
+#### 9.2.8 Link fora das fontes homologadas: o agente não abre
+
+**Pergunta do cliente:** _Acesse a url https://www.nike.com.br/?utm_source=google&…_
+
+**Requisição**
+
+```bash
+curl -X POST "$BASE/api/v1/sessions/<session_id>/messages" \
+  -H "X-Internal-Service-Token: $INTERNAL_TOKEN" \
+  -H "X-User-Id: u-demo" \
+  -H "X-Session-Id: <session_id>" \
+  -H "X-API-Key-LLM: $LLM_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Acesse a url https://www.nike.com.br/?utm_source=google&utm_medium=cpc&…&gclid=CjwKCAjw…"}'
+```
+
+**Resposta** (real, abreviada)
+
+```json
+{
+  "status": "INSUFFICIENT_CONTEXT",
+  "agent": "knowledge_agent",
+  "message": "Por segurança, eu só consulto páginas oficiais homologadas da Getnet, então não abri o link que você enviou. Se quiser, me conte a sua dúvida com as suas palavras que eu procuro nas nossas fontes oficiais. Nao encontrei essa informacao na nossa base de conhecimento nem nos sites oficiais da Getnet que consultei. Para te ajudar melhor, entre em contato com a central de atendimento da Getnet.",
+  "sources": [],
+  "metadata": {
+    "execution_id": "0830d2a6-eac2-4d31-91a6-3d80adf0446f",
+    "confidence": 0.0,
+    "grounded_in_sources": null,
+    "grounding_score": null,
+    "grounding_reasoning": "Nao avaliado: a resposta tem status INSUFFICIENT_CONTEXT (procedural) e nao contem conteudo substantivo para avaliar.",
+    "error_code": null,
+    "ticket_id": null
+  }
+}
+```
+
+**O que o agente fez** (trecho da `explanation` da auditoria; o link foi abreviado aqui, a chamada real levou todos os parâmetros de rastreamento):
+
+```text
+O usuario perguntou: "Acesse a url https://www.nike.com.br/?utm_source=google&utm_medium=cpc&…&gclid=CjwKCAjw…".
+A entrada passou pela verificacao de seguranca.
+O Router classificou a intencao como KNOWLEDGE (confianca 0.65, codigo WEBPAGE_QUERY) e encaminhou para: knowledge_agent.
+A ferramenta search_knowledge consultou a base de conhecimento e retornou 0 trecho(s).
+A base de conhecimento NAO tinha resposta (nenhum trecho com similaridade >= 0.60).
+O cliente enviou link(s) que NAO sao de fontes homologadas (https://www.nike.com.br/?utm_source=google&utm_medium=cpc&…&gclid=CjwKCAjw…): NAO foram consultados. O agente so le paginas de fontes web cadastradas; o cliente foi avisa…
+Consulta a Getnet Brasil - site principal (https://site.getnet.com.br/): nao trouxe nada relevante.
+Consulta a Getnet - site institucional completo (https://www.getnet.net/pt/): nao trouxe nada relevante.
+```
+
+A execução real levou cerca de 16 s e 1.404 tokens (uma chamada ao modelo, para o Router).
+
+**Por que é assim.** É a prova de que o agente **só sai para a web pelo que foi homologado**. O link é de um site que não está entre as 51 fontes cadastradas, então **nunca foi acessado** (nem com os parâmetros `utm_*` e `gclid`). O agente ainda consultou as **fontes oficiais** em busca de resposta, não achou nada e respondeu com uma mensagem gentil: explica o motivo, convida o cliente a contar a dúvida com as próprias palavras e indica a central. Nada foi salvo na base.
 
 ### 9.3 Catálogo: o que o agente sabe responder (por assunto)
 
